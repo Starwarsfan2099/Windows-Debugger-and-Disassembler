@@ -1,7 +1,7 @@
-# Windows-Debugger-and-Dissasembler
+# Windows-Debugger-and-Disassembler
 Advanced Windows 32-bit debugger with several diferent functions to aid in static analysis, malware analysis, and computer forensics. 
 Some of the debugger functions include setting breakpoints, crash mode, and veiwing different registers. 
-This tool can also completely dissasemble an executable, inject shellcode and DLL's into procesess, monitor process creation, directories, and files.
+This tool can also completely disassemble an executable, inject shellcode and DLL's into processes, monitor process creation, directories, and files.
 The GitHub includes the debugger, a test executable (that crashes as well), and a test DLL for injection. Everything can run on Windows 7-10.
 # Overview of Funtions:
 
@@ -32,7 +32,7 @@ Crash mode detects `exception_debug_event`, determines the cause of the crash, a
 ![Alt text](images/imgCreatedFiles.PNG?raw=true "Screenshot")
 Hooks several Windows functions and prints files made, deleted, or modified.
 # Process and File Monitoring
-`Monitoring-File` starts monitoring Windows `tmp` directories and tryes to dump the file contents. `Monitoring-Procesess` monitors created procesess and prints info on them. `Monitoring-List Procesess` list current procesess and PID's (for attaching)
+`Monitoring-File` starts monitoring Windows `tmp` directories and tryes to dump the file contents. `Monitoring-Processes` monitors created processes and prints info on them. `Monitoring-List processes` list current processes and PID's (for attaching)
 
 Process monitoring while loading firefox:
 ![Alt text](images/imgProcessMon.PNG?raw=true "Screenshot")
