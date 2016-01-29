@@ -40,7 +40,7 @@ Process monitoring while loading firefox:
 File monitoring while loading Arduino:
 ![Alt text](images/imgFilemon.PNG?raw=true "Screenshot")
 # Injection
-Shellcode and DLL injection is also possible:
+DLL and Shellcode injection is also possible:
 ![Alt text](images/imgDllinjection.PNG?raw=true "Screenshot")
 ![Alt text](images/imgShellcode.PNG?raw=true "Screenshot")
 # Disassembly
