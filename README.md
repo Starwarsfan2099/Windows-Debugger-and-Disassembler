@@ -29,9 +29,13 @@ The options avalible are to: `Just say Breakpoint Hit` which does what is says, 
 ![Alt text](images/imgCrashmode.PNG?raw=true "Screenshot")
 Crash mode detects `exception_debug_event`, determines the cause of the crash, and prints tons of output.
 # Created Files Mode
+![Alt text](images/imgCreatedFiles.PNG?raw=true "Screenshot")
 Hooks several Windows functions and prints files made, deleted, or modified.
 # Process and File Monitoring
 `Monitoring-File` starts monitoring Windows `tmp` directories and tryes to dump the file contents. `Monitoring-Procesess` monitors created procesess and prints info on them. `Monitoring-List Procesess` list current procesess and PID's (for attaching)
+
+Process monitoring while loading firefox:
+![Alt text](images/imgProcessMon.PNG?raw=true "Screenshot")
 
 File monitoring while loading Arduino:
 ![Alt text](images/imgFilemon.PNG?raw=true "Screenshot")
