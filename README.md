@@ -3,6 +3,8 @@ Advanced Windows 32-bit debugger with several diferent functions to aid in stati
 Some of the debugger functions include setting breakpoints, crash mode, and veiwing different registers. 
 This tool can also completely disassemble an executable, inject shellcode and DLL's into processes, monitor process creation, directories, and files.
 The GitHub includes the debugger, a test executable (that crashes as well), and a test DLL for injection. Everything can run on Windows 7-10.
+# Update
+The most recent update moved a few things around and added debugger hiding, hex veiwer,address disassembler, and real time register editing! Pictures are now slightly different from the actual application.
 # Overview of Funtions:
 
 ![Alt text](images/img1.PNG?raw=true "Screenshot")
