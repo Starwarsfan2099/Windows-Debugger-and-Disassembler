@@ -1,17 +1,17 @@
 # Windows-Debugger-and-Disassembler
-Advanced Windows 32-bit debugger with several diferent functions to aid in static analysis, malware analysis, and computer forensics. 
-Some of the debugger functions include setting breakpoints, crash mode, and veiwing different registers. 
+Advanced Windows 32-bit debugger with several different functions to aid in static analysis, malware analysis, and computer forensics. 
+Some of the debugger functions include setting breakpoints, crash mode, and viewing different registers. 
 This tool can also completely disassemble an executable, inject shellcode and DLL's into processes, monitor process creation, directories, and files.
 The GitHub includes the debugger, a test executable (that crashes as well), and a test DLL for injection. Everything can run on Windows 7-10.
 # Update
-The most recent update moved a few things around and added debugger hiding, hex veiwer,address disassembler, and real time register editing! Pictures are now slightly different from the actual application.
-# Overview of Funtions:
+The most recent update moved a few things around and added debugger hiding, hex viewer,address disassembler, and real time register editing! Pictures are now slightly different from the actual application.
+# Overview of Functions:
 
 ![Alt text](images/img1.PNG?raw=true "Screenshot")
 # Main Debugger
 The main window `^shown above^` contains all the features. To get started, select `File-Attach` and enter a PID to attach to.
-Launching executables is also possible`File-Open`, but most of the debugging features don't support it, so just stick with attaching.
-When ready, just hit `Start` and whatch the debugger work. The debugger is currently in `Default` mode. The first output is DLL's the executable is loading, and then debugging codes:
+Launching executable is also possible`File-Open`, but most of the debugging features don't support it, so just stick with attaching.
+When ready, just hit `Start` and watch the debugger work. The debugger is currently in `Default` mode. The first output is DLL's the executable is loading, and then debugging codes:
 
 # Breakpoints
 ![Alt text](images/imgBreakPoints.PNG?raw=true "Screenshot")
@@ -25,7 +25,7 @@ msvcrt.dll, sprintf
 msvcrt.dll, vsprintf
 ```
 To add breakpoints, add the DLL its found in, and then the function. To set what a breakpoint does, go to `Breakpoints-When a breakpoint is hit` and select an option.
-The options avalible are to: `Just say Breakpoint Hit` which does what is says, `SEH Unwind` which shows the last lines of the SEH handler, `Stack unwind` which unwinds and displays the stack memory, `Disassem Around` which disassembles 10 instructions around the breakpoint, and last `All of the above plus extra` which shows everything just mentioned plus register states. Picture below:
+The options available are to: `Just say Breakpoint Hit` which does what is says, `SEH Unwind` which shows the last lines of the SEH handler, `Stack unwind` which unwinds and displays the stack memory, `Disassem Around` which disassembles 10 instructions around the breakpoint, and last `All of the above plus extra` which shows everything just mentioned plus register states. Picture below:
 ![Alt text](images/imgBreakpoint2.PNG?raw=true "Screenshot")
 # Crash mode
 ![Alt text](images/imgCrashmode.PNG?raw=true "Screenshot")
@@ -34,7 +34,7 @@ Crash mode detects `exception_debug_event`, determines the cause of the crash, a
 ![Alt text](images/imgCreatedFiles.PNG?raw=true "Screenshot")
 Hooks several Windows functions and prints files made, deleted, or modified.
 # Process and File Monitoring
-`Monitoring-File` starts monitoring Windows `tmp` directories and tryes to dump the file contents. `Monitoring-Processes` monitors created processes and prints info on them. `Monitoring-List processes` list current processes and PID's (for attaching)
+`Monitoring-File` starts monitoring Windows `tmp` directories and tries to dump the file contents. `Monitoring-Processes` monitors created processes and prints info on them. `Monitoring-List processes` list current processes and PID's (for attaching)
 
 Process monitoring while loading firefox:
 ![Alt text](images/imgProcessMon.PNG?raw=true "Screenshot")
