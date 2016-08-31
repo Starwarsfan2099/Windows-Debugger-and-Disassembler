@@ -60,4 +60,4 @@ Select `File-open` then `Debugger-disassemble` to disassemble the executable:
 If you are experiencing crashes, try turning the color option off (`Options-Colors off`)
 
 # Source code
-requires pydbg, pydasm, and win32con
+Requires pydbg, pydasm, and win32con
