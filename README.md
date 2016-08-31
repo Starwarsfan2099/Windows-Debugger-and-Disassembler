@@ -58,3 +58,6 @@ Select `File-open` then `Debugger-disassemble` to disassemble the executable:
 `TestDLL.dll`: DLL to test with the dll injection feature.
 # Problems
 If you are experiencing crashes, try turning the color option off (`Options-Colors off`)
+
+# Source code
+requires pydbg, pydasm, and win32con
