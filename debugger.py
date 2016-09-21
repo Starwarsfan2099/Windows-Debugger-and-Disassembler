@@ -7,7 +7,7 @@ import tkMessageBox
 from Tkinter import *
 from ttk import Frame, Button, Label, Style
 global file, file2
-from my_debugger_defines import *
+from debuggerDefines import *
 from ctypes import *
 import ctypes
 import Queue
@@ -25,7 +25,7 @@ import pefile
 import time
 import distorm3
 import re
-import utils2 as utils
+import debuggerUtilities as utils
 import win32con
 import win32api
 import win32security
