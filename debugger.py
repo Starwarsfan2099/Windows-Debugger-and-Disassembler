@@ -2172,7 +2172,7 @@ def main():
     root.geometry("750x450+300+300")
     print "[==Welcome to PyDebugger====]"
     print "[===Written by Starwarsfan2099]"
-    print "[====Check out github.com/Starwarsfan2099 for more great tools]"
+    print "[====Check out github.com/Starwarsfan2099 for support and more projects]"
     print "Help, errors, and other info will be displayed here(Plus the same info displayed in the main windows)"
     app = Example(root)
     root.mainloop()
