@@ -1,5 +1,5 @@
 # Windows-Debugger-and-Disassembler
-Advanced Windows 32-bit debugger with several different functions to aid in static analysis, malware analysis, and computer forensics. 
+Basic Windows 32-bit debugger with several different functions to aid in static analysis, malware analysis, and computer forensics. 
 Some of the debugger functions include setting breakpoints, crash mode, and viewing different registers. 
 This tool can also completely disassemble an executable, inject shellcode and DLL's into processes, monitor process creation, directories, and files.
 The GitHub includes the debugger, a test executable (that crashes as well), and a test DLL for injection. Everything can run on Windows 7-10.
