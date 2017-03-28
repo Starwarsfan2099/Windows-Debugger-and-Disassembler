@@ -1,0 +1,18 @@
+Metadata-Version: 1.1
+Name: PyDasm
+Version: 1.5
+Summary: Libdasm bindings for Python
+Home-page: http://code.google.com/p/libdasm/
+Author: UNKNOWN
+Author-email: UNKNOWN
+License: UNKNOWN
+Download-URL: http://winappdbg.sourceforge.net/blog/PyDasm-1.5-precompiled.zip
+Description: UNKNOWN
+Platform: win32
+Platform: win64
+Classifier: License :: Public Domain
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Topic :: Software Development :: Libraries
+Provides: pydasm

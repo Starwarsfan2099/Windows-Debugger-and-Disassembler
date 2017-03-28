@@ -1,0 +1,164 @@
+[0x5-> EXIT_PROCESS_DEBUG_EVENT]
+[INVALID]:deadbeef Unable to disassemble at deadbeef from thread 9612 caused access violation
+when attempting to read from 0xdeadbeef
+
+CONTEXT DUMP
+  EIP: deadbeef Unable to disassemble at deadbeef
+  EAX: 00000000 (         0) -> N/A
+  EBX: 7701aa70 (1996597872) -> N/A
+  ECX: 6ba1222c (1805722156) -> N/A
+  EDX: 00000000 (         0) -> N/A
+  EDI: 000000d0 (       208) -> N/A
+  ESI: 00000000 (         0) -> N/A
+  EBP: 0062adc4 (   6467012) -> bnw@}N@ b<b,bpydexe.manifestl2l$DC:\Users\Owner\Desktop\GitHub\Wind (stack)
+  ESP: 0062ad54 (   6466900) -> nw><bbpw$rbbbPqw2bnw@}N@ b<b,bpydexe.manifestl2l$D (stack)
+  +00: 776eacb9 (2003741881) -> N/A
+  +04: 000000d0 (       208) -> N/A
+  +08: 00000000 (         0) -> N/A
+  +0c: 00000000 (         0) -> N/A
+  +10: 90108b3e (2417003326) -> N/A
+  +14: 0062ae3c (   6467132) -> DC:\Users\Owner\Desktop\GitHub\Windows-Debugger-and-Disassembler\Windows-Compiled\bufferOverflo (stack)
+
+disasm around:
+	0xdeadbeef Unable to disassemble
+
+stack unwind:
+	KERNELBASE.dll:776eac12
+	bufferOverflow.exe:00404e15
+
+SEH unwind:
+	0062ffcc -> KERNELBASE.dll:7771d650 mov edi,edi
+	0062ffe4 -> ntdll.dll:77c55ef0 mov edi,edi
+	ffffffff -> ntdll.dll:77c62646 nop
+
+
+
+[+]SEH Chain
+	0062ffcc -> 2003949136
+	0062ffe4 -> 2009423600
+	ffffffff -> 2009474630
+
+[**] Thread ID:000:: 000004dc EDX: 00000000
+[**] Thread ID:000:: 000004dc ECX: 00000000
+[**] Thread ID:000:: 000004dc EBX: 7701aa70
+[**] Thread ID:000:: 000004dc EAX: 00000000
+[**] Thread ID:000:: 000004dc EBP: 0062adc4
+[**] Thread ID:000:: 000004dc ESP: 0062ad54
+[**] Thread ID:000: 000004dc EIP: deadbeef
+[*] Dumping registers for threads:
+[**] Thread ID:000:: 000004d4 EDX: 00000000
+[**] Thread ID:000:: 000004d4 ECX: 00000000
+[**] Thread ID:000:: 000004d4 EBX: 7701aa70
+[**] Thread ID:000:: 000004d4 EAX: 00000000
+[**] Thread ID:000:: 000004d4 EBP: 0062adc4
+[**] Thread ID:000:: 000004d4 ESP: 0062ad54
+[**] Thread ID:000: 000004d4 EIP: 77c4dd3c
+[*] Dumping registers for threads:
+[0x4-> EXIT_THREAD_DEBUG_EVENT]
+[0x2-> CREATE_THREAD_DEBUG_EVENT]
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x74a30000 \Windows\SysWOW64\bcryptprimitives.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x74690000 \Windows\SysWOW64\cryptbase.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x746a0000 \Windows\SysWOW64\sspicli.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x74f40000 \Windows\SysWOW64\rpcrt4.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x75020000 \Windows\SysWOW64\sechost.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x753a0000 \Windows\SysWOW64\ws2_32.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x76fd0000 \Windows\SysWOW64\msvcrt.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x77620000 \Windows\SysWOW64\KernelBase.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x74e60000 \Windows\SysWOW64\kernel32.dll
+[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x77be0000 \Windows\SysWOW64\ntdll.dll
+[0x3-> CREATE_PROCESS_DEBUG_EVENT]
+[*] Done with breakpoints
+Set Breakpoint on vsprintf at address 1996776528
+Address of vsprintf(msvcrt) is: 1996776528
+Set Breakpoint on sprintf at address 1996771328
+Address of sprintf(msvcrt) is: 1996771328
+Set Breakpoint on strncpy at address 1996854480
+Address of strncpy(msvcrt) is: 1996854480
+Set Breakpoint on printf at address 1996770112
+Address of printf(msvcrt) is: 1996770112
+[+] DLL Loaded(270598144) > tclreg12.dll
+[+] DLL Loaded(1952841728) > dwmapi.dll
+[+] DLL Loaded(1957560320) > MSCTF.dll
+[+] DLL Loaded(1952579584) > WTSAPI32.dll
+[+] DLL Loaded(33030144) > _psutil_windows.pyd
+[+] DLL Loaded(1878196224) > sxs.dll
+[+] DLL Loaded(1866465280) > fastprox.dll
+[+] DLL Loaded(1923874816) > wbemsvc.dll
+[+] DLL Loaded(1619787776) > wmiutils.dll
+[+] DLL Loaded(1923940352) > wbemprox.dll
+[+] DLL Loaded(1867317248) > wbemcomn.dll
+[+] DLL Loaded(1547370496) > wbemdisp.dll
+[+] DLL Loaded(1967783936) > clbcatq.dll
+[+] DLL Loaded(1897398272) > iertutil.dll
+[+] DLL Loaded(1899692032) > urlmon.dll
+[+] DLL Loaded(1949171712) > uxtheme.dll
+[+] DLL Loaded(505413632) > pythoncom27.dll
+[+] DLL Loaded(507183104) > _win32sysloader.pyd
+[+] DLL Loaded(1930559488) > sfc_os.DLL
+[+] DLL Loaded(32636928) > sfc.dll
+[+] DLL Loaded(1915944960) > MSWSOCK.dll
+[+] DLL Loaded(513867776) > win32file.pyd
+[+] DLL Loaded(1547632640) > LOGONCLI.DLL
+[+] DLL Loaded(1862336512) > ntdsapi.dll
+[+] DLL Loaded(32571392) > security.dll
+[+] DLL Loaded(1940914176) > NETUTILS.DLL
+[+] DLL Loaded(1944846336) > NETAPI32.dll
+[+] DLL Loaded(516423680) > win32security.pyd
+[+] DLL Loaded(1941962752) > secur32.dll
+[+] DLL Loaded(1951072256) > VERSION.dll
+[+] DLL Loaded(512491520) > win32api.pyd
+[+] DLL Loaded(1862467584) > distorm3.dll
+[+] DLL Loaded(2004680704) > psapi.DLL
+[+] DLL Loaded(1949827072) > iphlpapi.DLL
+[+] DLL Loaded(1974403072) > MSASN1.dll
+[+] DLL Loaded(1968570368) > CRYPT32.dll
+[+] DLL Loaded(1501102080) > _ssl.pyd
+[+] DLL Loaded(1862664192) > _socket.pyd
+[+] DLL Loaded(21823488) > pydasm.pyd
+[+] DLL Loaded(1915617280) > bcrypt.dll
+[+] DLL Loaded(1915748352) > rsaenh.dll
+[+] DLL Loaded(1916272640) > CRYPTSP.dll
+[+] DLL Loaded(1862729728) > _hashlib.pyd
+[+] DLL Loaded(511311872) > pywintypes27.dll
+[+] DLL Loaded(512688128) > win32clipboard.pyd
+[+] DLL Loaded(1937506304) > COMCTL32.dll
+[+] DLL Loaded(1963393024) > COMDLG32.dll
+[+] DLL Loaded(1966735360) > WS2_32.dll
+[+] DLL Loaded(270663680) > tk85.dll
+[+] DLL Loaded(268435456) > tcl85.dll
+[+] DLL Loaded(1944387584) > _tkinter.pyd
+[+] DLL Loaded(2004746240) > msvcp_win.dll
+[+] DLL Loaded(1953234944) > OLEAUT32.dll
+[+] DLL Loaded(1955069952) > ole32.dll
+[+] DLL Loaded(1863778304) > _ctypes.pyd
+[+] DLL Loaded(1968373760) > IMM32.DLL
+[+] DLL Loaded(1997078528) > profapi.dll
+[+] DLL Loaded(1967194112) > shcore.dll
+[+] DLL Loaded(1953890304) > kernel.appcore.dll
+[+] DLL Loaded(1957232640) > shlwapi.dll
+[+] DLL Loaded(1974468608) > powrprof.dll
+[+] DLL Loaded(1960312832) > ucrtbase.dll
+[+] DLL Loaded(2005270528) > combase.dll
+[+] DLL Loaded(1997209600) > windows.storage.dll
+[+] DLL Loaded(1956446208) > cfgmgr32.dll
+[+] DLL Loaded(1974796288) > SHELL32.dll
+[+] DLL Loaded(1956839424) > bcryptPrimitives.dll
+[+] DLL Loaded(1953038336) > CRYPTBASE.dll
+[+] DLL Loaded(1953103872) > SspiCli.dll
+[+] DLL Loaded(1962147840) > RPCRT4.dll
+[+] DLL Loaded(1963065344) > sechost.dll
+[+] DLL Loaded(1996292096) > msvcrt.dll
+[+] DLL Loaded(1953955840) > ADVAPI32.dll
+[+] DLL Loaded(1958871040) > gdi32full.dll
+[+] DLL Loaded(1954480128) > GDI32.dll
+[+] DLL Loaded(1956708352) > win32u.dll
+[+] DLL Loaded(2007498752) > USER32.dll
+[+] DLL Loaded(1950351360) > MSVCR90.dll
+[+] DLL Loaded(1547829248) > python27.dll
+[+] DLL Loaded(1929248768) > apphelp.dll
+[+] DLL Loaded(2002911232) > KERNELBASE.dll
+[+] DLL Loaded(1961230336) > KERNEL32.DLL
+[+] DLL Loaded(2008940544) > ntdll.dll
+[*] Executable > python.exe
+[+] Enabling crash mode
+Using PID of 1116

@@ -1,0 +1,4 @@
+msvcrt.dll, printf
+msvcrt.dll, strncpy
+msvcrt.dll, sprintf
+msvcrt.dll, vsprintf
