@@ -2,7 +2,7 @@
 Basic Windows 32-bit debugger with several different functions to aid in static analysis, malware analysis, and computer forensics. 
 Some of the debugger functions include setting breakpoints, crash mode, and viewing different registers. 
 This tool can also completely disassemble an executable, inject shellcode and DLL's into processes, monitor process creation, directories, and files.
-The GitHub includes the debugger, a test executable (that crashes as well), and a test DLL for injection. Everything has benn tested on and works on Windows 7-10.
+The GitHub includes the debugger, a test executable (that crashes as well), and a test DLL for injection. Everything has been tested on and works on Windows 7-10.
 # Update
 The most recent update moved a few things around and added debugger hiding, hex viewer,address disassembler, and real time register editing! Pictures are now slightly different from the actual application.
 # Overview of Functions:
