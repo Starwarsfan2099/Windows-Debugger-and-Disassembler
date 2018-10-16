@@ -16,7 +16,6 @@ import ast
 import win32clipboard
 from cStringIO import StringIO
 import sys
-# Import my debugger library
 from pydbg import *
 from pydbg.defines import *
 import struct
@@ -35,7 +34,7 @@ import pythoncom
 import tempfile
 import binascii
 import psutil
-time2 = .00015
+sleepTime = .00015
 # Initialize some constants for Windows functions and my debugger
 dbg = pydbg()
 kernel32 = windll.kernel32
@@ -70,7 +69,7 @@ highlightWords = {'0x1 ': 'red',
                   'PID:': 'blue'
                   }
 
-class Example(Frame):
+class debuggerMain(Frame):
     
     def __init__(self, parent):# Initilize the GUI
         Frame.__init__(self, parent)
@@ -179,12 +178,12 @@ class Example(Frame):
         submenu2.add_command(label="Disassem Around", command=lambda: self.deal(4))
         submenu2.add_command(label="All of the above + extra :)", command=lambda: self.deal(5))
 
-        injmenu.add_command(label="Inject dll", command=self.popupDLL2)
-        injmenu.add_command(label="Inject shellcode", command=self.code_inject)
+        injmenu.add_command(label="Inject dll", command=self.popupDLLWindow)
+        injmenu.add_command(label="Inject shellcode", command=self.codeInject)
 
-        monmenu.add_command(label="File Monitor", command=self.file_mon)
-        monmenu.add_command(label="Process Monitoer", command=self.proc_mon)
-        monmenu.add_command(label="List running procesess", command=self.procesess_list2)
+        monmenu.add_command(label="File Monitor", command=self.fileMonitor)
+        monmenu.add_command(label="Process Monitoer", command=self.processMonitor)
+        monmenu.add_command(label="List running procesess", command=self.processList)
         
         optionsMenu = Menu(fileMenu)
         optionsMenu.add_command(label="Export", command=self.export)
@@ -193,11 +192,11 @@ class Example(Frame):
 
         dismenu = Menu(fileMenu)
         dismenu.add_command(label="Dissasemble", command=self.disassemble3)
-        dismenu.add_command(label="Dissasemble Around", command=self.diss_around)
-        dismenu.add_command(label="Show hex", command=self.show_hex)
+        dismenu.add_command(label="Dissasemble Around", command=self.dissasembleAround)
+        dismenu.add_command(label="Show hex", command=self.showHex)
 
         editMenu = Menu(fileMenu)
-        editMenu.add_command(label="Find", command=self.find_action)
+        editMenu.add_command(label="Find", command=self.findAction)
         
         fileMenu.add_command(label="Attach", command=self.popupPID)
         fileMenu.add_command(label="Open", command=self.popupOPEN2)
@@ -213,11 +212,11 @@ class Example(Frame):
         menubar.add_cascade(label="Monitoring", underline=0, menu=monmenu)
         menubar.add_cascade(label="Options", underline=0, menu=optionsMenu)
         line = "Welcome to the PyDebugger version 3.1"
-        self.print2(line)
+        self.debugPrint(line)
         self.rClickbinder(self.textPad)
         self.textPad.bind("<Key>", self.highlighter)
 
-    def print2(self, line):
+    def debugPrint(self, line):
         print line
         try:
             line.strip("\n")
@@ -227,7 +226,7 @@ class Example(Frame):
             pass   #Probably a list 
         self.textPad.insert('1.0', line)
         self.highlighter(1)
-        time.sleep(time2)
+        time.sleep(sleepTime)
 
     def highlighter(self, r):
         if not self.coloring:
@@ -248,53 +247,47 @@ class Example(Frame):
                 pass
         return True
 
-    def diss_around(self):
+    def dissasembleAround(self):
         if self.PID == self.OPEN:
-            self.print2("[-] For dissasembly around an address, you must be runing it...")
+            self.debugPrint("[-] For dissasembly around an address, you must be runing it...")
             return False
         self.w=popupWindowDISS(self.master)
         self.master.wait_window(self.w.top)
         address = self.w.value
         line = dbg.disasm_around(address)
-        self.print2(line)
+        self.debugPrint(line)
 
-    def show_hex(self):
+    def showHex(self):
         self.blocksize = 1024
         if self.OPEN == None:
-            self.print2("[-] You must open an executable first.")
+            self.debugPrint("[-] You must open an executable first.")
             return False
         self.w=popupWindowHEX(self.master)
         self.master.wait_window(self.w.top)
-        self.print2("[*] Converting...")
-        t = threading.Thread(target=self.show_hex2)
+        self.debugPrint("[*] Converting...")
+        t = threading.Thread(target=self.showHex2)
         t.daemon = True
         t.start()
 
-    def show_hex2(self):
+    def showHex2(self):
         offset = 0
         with open(self.OPEN,"rb") as f:
             block = f.read(self.blocksize)
             str = ""
             for ch in block:
                     str += hex(ord(ch))+" "
-            self.print2(str)
+            self.debugPrint(str)
         
-    def show_hex22(self):
-        with open(self.OPEN, 'rb') as f:
-            content = f.read()
-            self.print2(binascii.hexlify(content))
-            #self.print2(' '.join([str(ord(a)) for a in content]))
-
     def change(self):
         self.w=popupWindowCHANGE(self.master)
         self.master.wait_window(self.w.top)
 
     def hide(self):
-        self.print2("[-] Warning, This only works with attaching, not opening-May cause errors.")
-        self.print2("[*] Debugger will hide it's self after the first breakpoint, you will get a message.")
+        self.debugPrint("[-] Warning, This only works with attaching, not opening-May cause errors.")
+        self.debugPrint("[*] Debugger will hide it's self after the first breakpoint, you will get a message.")
         self.hide2 = True
     
-    def popupDLL2(self):
+    def popupDLLWindow(self):
         print "Dll Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), trying to inject into a different bit process will produve an error"
         #self.w=popupWindowDLL(self.master)
         #self.master.wait_window(self.w.top)
@@ -317,34 +310,34 @@ class Example(Frame):
         PAGE_RW_PRIV = 0x04
         PROCESS_ALL_ACCESS = 0x1F0FFF
         VIRTUAL_MEM = 0x3000
-        self.print2( "[+] Starting DLL Injector")
+        self.debugPrint( "[+] Starting DLL Injector")
         LEN_DLL = len(self.DLL)# get the length of the DLL PATH 
-        self.print2( "[+] Getting process handle for PID:%d " % PID)
+        self.debugPrint( "[+] Getting process handle for PID:%d " % PID)
         hProcess = kernel32.OpenProcess(PROCESS_ALL_ACCESS,False,PID)
      
         if hProcess is None:
-            self.print2( "[+] Unable to get process handle")
+            self.debugPrint( "[+] Unable to get process handle")
             return False
-        self.print2( "[+] Allocating space for DLL PATH")
+        self.debugPrint( "[+] Allocating space for DLL PATH")
         DLL_PATH_ADDR = kernel32.VirtualAllocEx(hProcess, 
                                                 0,
                                                 LEN_DLL,
                                                 VIRTUAL_MEM,
                                                 PAGE_RW_PRIV)
         bool_Written = c_int(0)
-        self.print2( "|--[+] Writing DLL PATH to current process space")
+        self.debugPrint( "|--[+] Writing DLL PATH to current process space")
         kernel32.WriteProcessMemory(hProcess,
                                     DLL_PATH_ADDR,
                                     DLL_PATH,
                                     LEN_DLL,
                                     byref(bool_Written))
-        self.print2( "[+] Resolving Call Specific functions & libraries")
+        self.debugPrint( "[+] Resolving Call Specific functions & libraries")
         kernel32DllHandler_addr = kernel32.GetModuleHandleA("kernel32")
-        self.print2( "|--[+] Resolved kernel32 library at 0x%08x" % kernel32DllHandler_addr)
+        self.debugPrint( "|--[+] Resolved kernel32 library at 0x%08x" % kernel32DllHandler_addr)
         LoadLibraryA_func_addr = kernel32.GetProcAddress(kernel32DllHandler_addr,"LoadLibraryA")
-        self.print2( "  |--[+] Resolve LoadLibraryA function at 0x%08x" %LoadLibraryA_func_addr)
+        self.debugPrint( "  |--[+] Resolve LoadLibraryA function at 0x%08x" %LoadLibraryA_func_addr)
         thread_id = c_ulong(0) # for our thread id
-        self.print2( "[+] Creating Remote Thread to load our DLL")
+        self.debugPrint( "[+] Creating Remote Thread to load our DLL")
         if not kernel32.CreateRemoteThread(hProcess,
                                     None,
                                     0,
@@ -353,13 +346,15 @@ class Example(Frame):
                                     0,
                                     byref(thread_id)):
             line = kernel32.GetLastError()
-            self.print2( "[-] Injection Failed, exiting with error code:%s" % line)
+            self.debugPrint( "[-] Injection Failed, exiting with error code:%s" % line)
+            if line == "5" or line == 5:
+                self.debugPrint("[*] Revieved error code 5, you are trying to inject into 32 bit process from a 64 bit or vice versa...")
             return False
         else:
             line = kernel32.GetLastError()
-            self.print2( "|--[+] Remote Thread 0x%08x created, DLL code injected with code:%s" % (thread_id.value, line))
+            self.debugPrint( "|--[+] Remote Thread 0x%08x created, DLL code injected with code:%s" % (thread_id.value, line))
             
-    def find_action(self):
+    def findAction(self):
             t2 = self.top = Toplevel(self)
             #t2 = tk.Toplevel(root)
             t2.title('Find Text')
@@ -376,7 +371,7 @@ class Example(Frame):
             c = IntVar()
             Checkbutton(t2, text='Ignore Case', variable=c).grid(row=1, column=1,
 				   sticky='e', padx=2, pady=2)
-            Button(t2, text='Find All', underline=0, command=lambda: self.search_for(v.get(), 
+            Button(t2, text='Find All', underline=0, command=lambda: self.serachFor(v.get(), 
 			  c.get(), self.textPad, t2, search_phrase_box)).grid(
 			  row=0, column=2, sticky='e'+'w', padx=2, pady=2)
             def close_search():
@@ -385,7 +380,7 @@ class Example(Frame):
                 # Override the close button
                 t2.protocol('WM_DELETE_WINDOW', close_search)
 
-    def search_for(self,needle,cssnstv, textPad, t2,e) :
+    def serachFor(self,needle,cssnstv, textPad, t2,e) :
             self.textPad.tag_remove('match', '1.0', END)
             count =0
             if needle:
@@ -401,21 +396,16 @@ class Example(Frame):
             self.textPad.focus_set()
             t2.title('%d found' % count)
             
-    def procesess_list(self):
+    def processList(self):
         self.clear()
-        self.print2("[+] Getting Process List...")
+        self.debugPrint("[+] Getting Process List...")
         for (pid, name) in dbg.enumerate_processes():
             if (pid != os.getpid()):
-                self.print2("[+] Name:%s PID:%s" % (name, pid))
+                self.debugPrint("[+] Name:%s PID:%s" % (name, pid))
             else:
-                self.print2("[+] Name:%s PID:%s     <==[Current Debugger Process] " % (name, pid))
-
-    def procesess_list2(self):
-        self.print2("[+] Getting Process List...")
-        self.procesess_list()
+                self.debugPrint("[+] Name:%s PID:%s     <==[Current Debugger Process] " % (name, pid))
         
-
-    def code_inject(self):
+    def codeInject(self):
         print "[-] Code Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), trying to inject into a different bit process will produve an error"
         self.w=popupWindowINJECT(self.master)
         self.master.wait_window(self.w.top)
@@ -428,21 +418,21 @@ class Example(Frame):
         memcommit = 0x00001000
         kernel32_variable = windll.kernel32
         shellcode_length = len(self.shellcode)
-        self.print2("[*] Shellcode length:%s" % shellcode_length)
-        self.print2("[+] Attaching to process")
+        self.debugPrint("[*] Shellcode length:%s" % shellcode_length)
+        self.debugPrint("[+] Attaching to process")
         process_handle = kernel32_variable.OpenProcess(process_all, False, self.PID)
         if process_handle is None:
-            self.print2( "[-] Unable to get process handle")
+            self.debugPrint( "[-] Unable to get process handle")
             return False
         memory_allocation_variable = kernel32_variable.VirtualAllocEx(process_handle, 0, shellcode_length, memcommit, page_rwx_value)
         kernel32_variable.WriteProcessMemory(process_handle, memory_allocation_variable, self.shellcode, shellcode_length, 0)
-        self.print2("|--[+] Creating remote thread")
+        self.debugPrint("|--[+] Creating remote thread")
         kernel32_variable.CreateRemoteThread(process_handle, None, 0, memory_allocation_variable, 0, 0, 0)
-        self.print2("[+] Shellcode should be injected now") 
+        self.debugPrint("[+] Shellcode should be injected now")
 
-    
 
-    def file_mon(self):
+
+    def fileMonitor(self):
         self.w=popupWindowDIR(self.master)
         self.master.wait_window(self.w.top)
         self.DIR = self.w.value
@@ -464,12 +454,12 @@ class Example(Frame):
         file_types['.bat'] = ["\r\nREM bhpmarker\r\n","\r\n%s\r\n" % command]
         file_types['.ps1'] = ["\r\nbhpmarker","Start-Process \"%s\"" % command]
         for path in dirs_to_monitor:
-            monitor_thread = threading.Thread(target=self.start_monitor,args=(path,))
+            monitor_thread = threading.Thread(target=self.startFileMonitor,args=(path,))
             monitor_thread.daemon = True
-            self.print2( "[+] Spawning monitoring thread for path: %s" % path)
+            self.debugPrint( "[+] Spawning monitoring thread for path: %s" % path)
             monitor_thread.start()
 
-    def inject_code(self,full_filename,extension,contents):
+    def injectCode(self,full_filename,extension,contents):
     
     # is our marker already in the file?
         if file_types[extension][0] in contents:
@@ -481,10 +471,10 @@ class Example(Frame):
         fd = open(full_filename,"wb")
         fd.write(full_contents)
         fd.close()
-        self.print2( "[\o/] Injected code.")
+        self.debugPrint( "[\o/] Injected code.")
         return
     
-    def start_monitor(self,path_to_watch):
+    def startFileMonitor(self,path_to_watch):
         # we create a thread for each monitoring run
         FILE_LIST_DIRECTORY = 0x0001
         FILE_CREATED      = 1
@@ -525,51 +515,51 @@ class Example(Frame):
                     full_filename = os.path.join(path_to_watch, file_name)
                     if action == FILE_CREATED:
                         line = ("[+] Created %s" % full_filename)
-                        self.print2(line)
+                        self.debugPrint(line)
                     elif action == FILE_DELETED:
                         line = ("[-] Deleted %s" % full_filename)
-                        self.print2(line)
+                        self.debugPrint(line)
                     elif action == FILE_MODIFIED:
                         line = ("[*] Modified %s" % full_filename)
-                        self.print2(line)
+                        self.debugPrint(line)
                     # dump out the file contents
                         line = ("[vvv] Dumping contents...")
-                        self.print2(line)
+                        self.debugPrint(line)
                         try:
                             fd = open(full_filename,"rb")
                             contents = fd.read()
                             fd.close()
-                            self.print2( contents)
+                            self.debugPrint( contents)
                             line = ("[^^^] Dump complete.")
-                            self.print2(line)
+                            self.debugPrint(line)
                         except:
                             line = ("[!!!] Failed.")
-                            self.print2(line)
+                            self.debugPrint(line)
                     
                         filename,extension = os.path.splitext(full_filename)
                     
                         if extension in file_types:
-                            self.inject_code(full_filename,extension,contents)
+                            self.injectCode(full_filename,extension,contents)
                     
                     elif action == FILE_RENAMED_FROM:
                         line = ("[>] Renamed from: %s" % full_filename)
-                        self.print2(line)
+                        self.debugPrint(line)
                     elif action == FILE_RENAMED_TO:
                         line = ("[<] Renamed to: %s" % full_filename)
-                        self.print2(line)
+                        self.debugPrint(line)
                     else:
                         line = ("[?] Unknown: %s" % full_filename)
-                        self.print2(line)
+                        self.debugPrint(line)
             except:
                 pass
 
-    def proc_mon(self):
-        self.print2("[+] Starting process monitor")
-        t = threading.Thread(target=self.proc_mon2)
+    def processMonitor(self):
+        self.debugPrint("[+] Starting process monitor")
+        t = threading.Thread(target=self.processMonitor2)
         t.daemon = True
         t.start()
 
-    def get_process_privileges(self, pid):
+    def getProcessPrivilages(self, pid):
         try:
         # obtain a handle to the target process
             hproc = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION, False, pid)
@@ -590,7 +580,7 @@ class Example(Frame):
             priv_list.append("N/A")
         return "|".join(priv_list)
 
-    def proc_mon2(self):
+    def processMonitor2(self):
         pythoncom.CoInitialize()
         c = wmi.WMI()
         process_watcher = c.Win32_Process.watch_for("creation")
@@ -606,30 +596,30 @@ class Example(Frame):
                 pid         = new_process.ProcessId
                 parent_pid  = new_process.ParentProcessId
 
-                privileges  = self.get_process_privileges(pid)
+                privileges  = self.getProcessPrivilages(pid)
 
                 process_log_message = "\n[+] Date: %s,\n[+] Process Owner:%s,\n[+] Executable:%s,\n[+] Cmd line opts:%s,\n[+] PID:%s,\n[+] Parent PID:%s,\n[+] Privs:%s" % (create_date, proc_owner, executable, cmdline, pid, parent_pid,privileges)
 
-                self.print2( "%s\r\n" % process_log_message)
+                self.debugPrint( "%s\r\n" % process_log_message)
             except:
                 pass
 
     def dummy(self):
-        self.print2("Not ready yet...")
+        self.debugPrint("Not ready yet...")
 
     def disassem(self, dbg):
-        self.print2("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
         line = dbg.disasm_around(dbg.exception_address)
         synop = "\nDissasembled around breakpoint instruction\n"
         for (ea, inst) in line:
             synop += "\t0x%08x %s\n" % (ea, inst)
-        self.print2(synop)
+        self.debugPrint(synop)
         self.wait()
         return DBG_CONTINUE
 
     def pauseMode(self):
         self.pauseModeVar = True
-        self.print2("[*]Will pause at breakpoints")
+        self.debugPrint("[*]Will pause at breakpoints")
 
     def deal(self, num):
         self.BreakFunk = num
@@ -642,61 +632,61 @@ class Example(Frame):
             fill = 1
             while self.pause:
                 fill = fill + 1 - 1
-            self.print2("[*] Continuing")
+            self.debugPrint("[*] Continuing")
 
     def SEH_unwind(self, dbg):
-        self.print2("[+]Hit a breakpoint at %s" % dbg.exception_address)
-        #self.print2("[+]SEH Chain")
+        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        #self.debugPrint("[+]SEH Chain")
         line = dbg.seh_unwind()
         synopsis = "\n[+]SEH Chain\n"
         for (addr, handler_str) in line:
             synopsis +=  "\t%08x -> %s\n" % (addr, handler_str)
-        self.print2(synopsis)
+        self.debugPrint(synopsis)
         self.wait()
         return DBG_CONTINUE
 
     def dump_info(self, dbg):
-        self.print2("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
         info = dbg.stack_unwind()
         synop1 = "\nStack Unwind\n"
         for entry in info:
                 synop1 += "\t%s\n" % entry
-        self.print2(synop1)
+        self.debugPrint(synop1)
         self.wait()
         return DBG_CONTINUE
 
     def all_info(self, dbg):
-        self.print2("[+]Hit a breakpoint at %s" % dbg.exception_address)
-        #self.print2("[+]SEH Chain")
+        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        #self.debugPrint("[+]SEH Chain")
         line = dbg.seh_unwind()
         synopsis = "\n[+]SEH Chain\n"
         for (addr, handler_str) in line:
             synopsis +=  "\t%08x -> %s\n" % (addr, handler_str)
-        self.print2(synopsis)
+        self.debugPrint(synopsis)
         info = dbg.stack_unwind()
         synop1 = "\nStack Unwind\n"
         for entry in info:
                 synop1 += "\t%s\n" % entry
-        self.print2(synop1)
+        self.debugPrint(synop1)
         line = dbg.disasm_around(dbg.exception_address)
         synop = "\nDissasembled around breakpoint instruction\n"
         for (ea, inst) in line:
             synop += "\t0x%08x %s\n" % (ea, inst)
-        self.print2(synop)
+        self.debugPrint(synop)
         i = 0;
         for thread_id in dbg.enumerate_threads():
             thread_handle  = dbg.open_thread(thread_id)
             context = dbg.get_thread_context(thread_handle)
-            self.print2("[*] Dumping registers for threads:")
-            self.print2("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
-            self.print2("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
-            self.print2("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
-            self.print2("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
-            self.print2("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
-            self.print2("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
-            self.print2("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
-            self.print2("[**] Thread ID:%03d:: %08x EDI: %08x" % (i,thread_handle,context.Edi))
-            self.print2("[**] Thread ID:%03d:: %08x ESI: %08x" % (i,thread_handle,context.Esi))
+            self.debugPrint("[*] Dumping registers for threads:")
+            self.debugPrint("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
+            self.debugPrint("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
+            self.debugPrint("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EDI: %08x" % (i,thread_handle,context.Edi))
+            self.debugPrint("[**] Thread ID:%03d:: %08x ESI: %08x" % (i,thread_handle,context.Esi))
             i += 1
         self.wait()
         return DBG_CONTINUE
@@ -705,54 +695,54 @@ class Example(Frame):
         try:
             file = open("Breakpoints.txt", "r")
         except:
-            self.print2("Could not find Breakpoints.txt, no breakpoint setting...")
+            self.debugPrint("Could not find Breakpoints.txt, no breakpoint setting...")
             pass
         for line in file.readlines():
             line = re.sub("[^\w]", " ",  line).split()
-            self.print2("[*] Breakpoint on %s in %s." % (line[2], line[0] + "." + line[1]))
+            self.debugPrint("[*] Breakpoint on %s in %s." % (line[2], line[0] + "." + line[1]))
 
     def get_dlls(self):
         for modules in pydbg().enumerate_modules():
             if self.CheckRun:
-                self.print2("[*] Executable > %s" % modules[0])
+                self.debugPrint("[*] Executable > %s" % modules[0])
                 self.CheckRun = False
             else:
-                self.print2("[+] DLL Loaded(%s) > %s" % (modules[1],modules[0]))
+                self.debugPrint("[+] DLL Loaded(%s) > %s" % (modules[1],modules[0]))
             time.sleep(.005)
 
     def handler_breakpoint(self, dbg):
-        self.print2("[+] Hit a breakpoint")
+        self.debugPrint("[+] Hit a breakpoint")
         print dbg
         return DBG_CONTINUE
 
     def InitPyDBG(self):
         def one(dbg):
-            self.print2("[0x1-> EXCEPTION_DEBUG_EVENT]")
+            self.debugPrint("[0x1-> EXCEPTION_DEBUG_EVENT]")
             return DBG_CONTINUE
         def two(dbg):
-            self.print2("[0x2-> CREATE_THREAD_DEBUG_EVENT]")
+            self.debugPrint("[0x2-> CREATE_THREAD_DEBUG_EVENT]")
             return DBG_CONTINUE
         def three(dbg):
-            self.print2("[0x3-> CREATE_PROCESS_DEBUG_EVENT]")
+            self.debugPrint("[0x3-> CREATE_PROCESS_DEBUG_EVENT]")
             return DBG_CONTINUE
         def four(dbg):
-            self.print2("[0x4-> EXIT_THREAD_DEBUG_EVENT]")
+            self.debugPrint("[0x4-> EXIT_THREAD_DEBUG_EVENT]")
             return DBG_CONTINUE
         def five(dbg):
-            self.print2("[0x5-> EXIT_PROCESS_DEBUG_EVENT]")
+            self.debugPrint("[0x5-> EXIT_PROCESS_DEBUG_EVENT]")
             return DBG_CONTINUE
         def six(dbg):
             last_dll = dbg.get_system_dll(-1)
-            self.print2("[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x%08x %s" % (last_dll.base, last_dll.path))
+            self.debugPrint("[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x%08x %s" % (last_dll.base, last_dll.path))
             return DBG_CONTINUE
         def seven(dbg):
-            self.print2("[0x7-> UNLOAD_DLL_DEBUG_EVENT]")
+            self.debugPrint("[0x7-> UNLOAD_DLL_DEBUG_EVENT]")
             return DBG_CONTINUE
         def eight(dbg):
-            self.print2("[0x8-> OUTPUT_DEBUG_STRING_EVENT]")
+            self.debugPrint("[0x8-> OUTPUT_DEBUG_STRING_EVENT]")
             return DBG_CONTINUE
         def nine(dbg):
-            self.print2("[0x9-> RIP_EVENT]")
+            self.debugPrint("[0x9-> RIP_EVENT]")
             return DBG_CONTINUE
         dbg.set_callback(EXCEPTION_DEBUG_EVENT,one)
         dbg.set_callback(CREATE_THREAD_DEBUG_EVENT,two)
@@ -780,7 +770,7 @@ class Example(Frame):
             else:
 # Disassemble this instruction
                 instruction = dbg.disasm(dbg.context.Eip)
-                self.print2( "#%d\t0x%08x : %s" % (instruction_count,dbg.context.Eip,
+                self.debugPrint( "#%d\t0x%08x : %s" % (instruction_count,dbg.context.Eip,
 instruction))
                 instruction_count += 1
                 dbg.single_step(True)
@@ -792,13 +782,13 @@ instruction))
         # take everything from ESP to ESP+20, which should give us enough
         # information to determine if we own any of the data
         esp_offset = 0
-        self.print2("[*] Hit %s" % dangerous_functions_resolved[dbg.context.Eip])
-        self.print2( "=================================================================" )
+        self.debugPrint("[*] Hit %s" % dangerous_functions_resolved[dbg.context.Eip])
+        self.debugPrint( "=================================================================" )
         while esp_offset <= 20:
             parameter = dbg.smart_dereference(dbg.context.Esp + esp_offset)
-            self.print2( "[ESP + %d] => %s" % (esp_offset, parameter))
+            self.debugPrint( "[ESP + %d] => %s" % (esp_offset, parameter))
             esp_offset += 4
-        self.print2( "=================================================================" )
+        self.debugPrint( "=================================================================" )
         dbg.suspend_all_threads()
         dbg.process_snapshot()
         dbg.resume_all_threads()
@@ -808,14 +798,14 @@ instruction))
     def hide_bp(self, dbg):
         if dbg.first_breakpoint:
             dbg.hide_debugger()
-            self.print2("[+] ========Debugger hidden!========")
+            self.debugPrint("[+] ========Debugger hidden!========")
         return DBG_CONTINUE
 
     def breakpointset(self, debugger):
         try:
             file = open("Breakpoints.txt", "r")
         except:
-            self.print2("Could not find Breakpoints.txt, no breakpoint setting...")
+            self.debugPrint("Could not find Breakpoints.txt, no breakpoint setting...")
             return False
         if self.hide2:
             dbg.set_callback(EXCEPTION_BREAKPOINT, self.hide_bp)
@@ -824,28 +814,28 @@ instruction))
                 line = re.sub("[^\w]", " ",  line).split()
                 if debugger == "pydbg":
                     func_address = dbg.func_resolve(line[0],line[2])
-                    self.print2("Address of %s(%s) is: 0x%08x" % (line[2], line[0], func_address))
+                    self.debugPrint("Address of %s(%s) is: 0x%08x" % (line[2], line[0], func_address))
                     if self.BreakFunk == 1:
                         dbg.bp_set(func_address, description=line[2],handler=self.handler_breakpoint)
                     elif self.BreakFunk == 2:
-                        self.print2("[*] Using 'SEH Unwind' handler")
+                        self.debugPrint("[*] Using 'SEH Unwind' handler")
                         dbg.bp_set(func_address, description=line[2],handler=self.SEH_unwind)
                     elif self.BreakFunk == 3:
-                        self.print2("[*] Using 'Dump Heap Info' handler")
+                        self.debugPrint("[*] Using 'Dump Heap Info' handler")
                         dbg.bp_set(func_address, description=line[2],handler=self.dump_info)
                     elif self.BreakFunk == 4:
-                        self.print2("[*] Using 'Disassem Around' handler")
+                        self.debugPrint("[*] Using 'Disassem Around' handler")
                         dbg.bp_set(func_address, description=line[2],handler=self.disassem)
                     elif self.BreakFunk == 5:
-                        self.print2("[*] Using 'All info handler'")
+                        self.debugPrint("[*] Using 'All info handler'")
                         dbg.bp_set(func_address, description=line[2],handler=self.all_info)
-                    self.print2("Set Breakpoint on %s at address 0x%08x" % (line[2], func_address))
+                    self.debugPrint("Set Breakpoint on %s at address 0x%08x" % (line[2], func_address))
             except:
-                self.print2("[-] Error setting breakpoint on %s(%s) at address 0x%08x" % (line[2], line[0], func_address))
-        self.print2("[*] Done with breakpoints") 
+                self.debugPrint("[-] Error setting breakpoint on %s(%s) at address 0x%08x" % (line[2], line[0], func_address))
+        self.debugPrint("[*] Done with breakpoints") 
             
             
-    def print2(self, line):
+    def debugPrint(self, line):
         print line
         try:
             line.strip("\n")
@@ -858,7 +848,7 @@ instruction))
             return True
         else:
             self.highlighter(1)
-        time.sleep(time2)
+        time.sleep(sleepTime)
 
     def print3(self, line):
         line.strip("\n")
@@ -866,33 +856,33 @@ instruction))
         self.highlighter(1)
 
     def crashMode(self):
-        self.print2("[+] Enabling crash mode")
+        self.debugPrint("[+] Enabling crash mode")
         self.crashModeState = True
         self.libModeState = False
         self.PYDBG = True
 
     def libMode(self):
-        self.print2("[+] Enabling Created Files mode")
+        self.debugPrint("[+] Enabling Created Files mode")
         self.libModeState = True
         self.crashModeState = False
         self.PYDBG = True
 
     def defualt(self):
-        self.print2("[+] Using default mode")
+        self.debugPrint("[+] Using default mode")
         self.libModeState = False
         self.PYDBG = False
         self.crashModeState = False
 
     def disassemble3(self):
         label = tkMessageBox.showinfo("Info", "This will not print anything until it is done, so don't go anywhere! After its done hit Options then Export and it will send it to a file.")
-        self.print2("This may take a while...")
+        self.debugPrint("This may take a while...")
         t = threading.Thread(target=self.disassemble2)
         t.daemon = True
         t.start()
 
     def disassemble2(self):
         if self.OPEN is None:
-            self.print2("[-]Error: You must open an executable first")
+            self.debugPrint("[-]Error: You must open an executable first")
             return False
         self.diss = True
         num_bytes = os.path.getsize(self.OPEN)
@@ -903,7 +893,7 @@ instruction))
         try:
             code = open(filename, 'rb').read()
         except Exception as e:
-            self.print2('Error reading file %s: %s' % (filename, e))
+            self.debugPrint('Error reading file %s: %s' % (filename, e))
             return False
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
@@ -911,7 +901,7 @@ instruction))
         # This shows how to use the Deocode - Generator
         iterable = distorm3.DecodeGenerator(offset, code, dt)
         #for (offset, size, instruction, hexdump) in iterable:
-        #    self.print2("%.8x: %-32s %s" % (offset, hexdump, instruction))
+        #    self.debugPrint("%.8x: %-32s %s" % (offset, hexdump, instruction))
         #    print("%.8x: %-32s %s" % (offset, hexdump, instruction))
 
         # It could also be used as a returned list:
@@ -921,9 +911,9 @@ instruction))
         
         line = mystdout.getvalue()
         self.textPad.insert('1.0', line)
-        #self.print2(line)
-        self.print2("Number of bytes disassembled: %d" % num_bytes)
-        self.print2("Disassembled:%s" % self.OPEN)
+        #self.debugPrint(line)
+        self.debugPrint("Number of bytes disassembled: %d" % num_bytes)
+        self.debugPrint("Disassembled:%s" % self.OPEN)
         self.nocolor = True
         self.highlighter(1)
         #t = threading.Thread(target=self.highlighter)
@@ -950,7 +940,7 @@ instruction))
 
             crash_bin = utils.crash_binning.crash_binning()
             crash_bin.record_crash(dbg)
-            self.print2(crash_bin.crash_synopsis())
+            self.debugPrint(crash_bin.crash_synopsis())
             dbg.terminate_process()
             return DBG_EXCEPTION_NOT_HANDLED
         
@@ -963,19 +953,19 @@ instruction))
         self.breakpointset("pydbg")
         dbg.run()
         #line = mystdout.getvalue()
-        #self.print2(line)
+        #self.debugPrint(line)
         self.crash = True
         
     def GetLib(self, pid):
         target_process = pid
         pid_is_there = False
-        self.print2("[*]Starting...")
+        self.debugPrint("[*]Starting...")
         def handler_CreateFileW(dbg):
             Filename = ""
             addr_FilePointer = dbg.read_process_memory(dbg.context.Esp + 0x4, 4)
             addr_FilePointer = struct.unpack("<L", addr_FilePointer)[0]
             Filename = dbg.smart_dereference(addr_FilePointer, True)
-            self.print2("[*]CreateFileW -> %s" % Filename)
+            self.debugPrint("[*]CreateFileW -> %s" % Filename)
             return DBG_CONTINUE
         def handler_CreateFileA(dbg):
             offset = 0
@@ -983,15 +973,15 @@ instruction))
             addr_FilePointer = dbg.read_process_memory(dbg.context.Esp + 0x4, 4)
             addr_FilePointer = struct.unpack("<L", addr_FilePointer)[0]
             buffer_FileA = dbg.smart_dereference(addr_FilePointer, True)
-            self.print2("[*]CreateFileA -> %s" % buffer_FileA)
+            self.debugPrint("[*]CreateFileA -> %s" % buffer_FileA)
             return DBG_CONTINUE
         pid_is_there = True
-        self.print2("[*]Attaching to %s" % target_process)
+        self.debugPrint("[*]Attaching to %s" % target_process)
         if not self.RepresentsInt(pid):
             try:
                 dbg.load(self.OPEN)
             except:
-                self.print2("[*]Error: Is this right:%s" % self.OPEN)
+                self.debugPrint("[*]Error: Is this right:%s" % self.OPEN)
         else:
             dbg.attach(int(pid))
         self.get_dlls()
@@ -1000,9 +990,15 @@ instruction))
         CreateFileW = dbg.func_resolve_debuggee("kernel32.dll","CreateFileW")
         CreateFileA = dbg.func_resolve_debuggee("kernel32.dll","CreateFileA")
         if CreateFileW == None:
-            self.print2("[*]Resolving %s @ %08x" % (function2,CreateFileW))
+            try:
+                self.debugPrint("[*]Resolving %s @ %08x" % (function2,CreateFileW))
+            except:
+                self.debugPrint("[*]Resolving %s @ Unknown" % (function2))
         if CreateFileA == None:
-            self.print2("[*]Resolving %s @ %08x" % (function3,CreateFileA))
+            try:
+                self.debugPrint("[*]Resolving %s @ %08x" % (function3,CreateFileA))
+            except:
+                self.debugPrint("[*]Resolving %s @ Unknown" % (function2))
         if CreateFileA == None:
             dbg.bp_set(CreateFileA, description="CreateFileA",handler=handler_CreateFileA)
         if CreateFileW == None:
@@ -1014,10 +1010,10 @@ instruction))
     def detach2(self):
         if (self.PID == None):
             dbg.detach()
-            self.print2("Detached!!!")
+            self.debugPrint("Detached!!!")
         elif (self.OPENSTATE == None):
             dbg.detach()
-            self.print2("Detached!!!")
+            self.debugPrint("Detached!!!")
         else:
             label = tkMessageBox.showinfo("Error", "You must attach or open a .exe first")
     
@@ -1035,75 +1031,13 @@ instruction))
         self.w=popupWindowPID(self.master)
         self.master.wait_window(self.w.top)
         self.PID = self.w.value
-        self.print2("Using PID of %s" % self.PID)
-
-    def popupDLL(self):
-        print "Dll Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), trying to inject into a different bit process will produve an error"
-        #self.w=popupWindowDLL(self.master)
-        #self.master.wait_window(self.w.top)
-        #self.DLL = self.w.value
-        self.DLL = tkFileDialog.askopenfile(mode='r',title='Select a dll',filetypes=[("Dynamic Libraries", "*.dll")] )
-        self.DLL = self.DLL.name
-        print self.DLL
-        self.w=popupWindowDLL2(self.master)
-        self.master.wait_window(self.w.top)
-        self.DLLPID = int(self.w.value)
-        if self.DLLPID == "":
-            if self.PID:
-                self.DLLPID = self.PID
-            else:
-                label = tkMessageBox.showinfo("Error", "You must attach or input a pid to inject a dll")
-        # Define constants we use
-        PAGE_RW_PRIV = 0x04
-        PROCESS_ALL_ACCESS = 0x1F0FFF
-        VIRTUAL_MEM = 0x3000
-        self.print2( "[+] Starting DLL Injector")
-        LEN_DLL = len(self.DLL)# get the length of the DLL PATH 
-        self.print2( "\t[+] Getting process handle for PID:%d " % self.DLLPID )
-        hProcess = kernel32.OpenProcess(PROCESS_ALL_ACCESS,False,self.DLLPID)
-        if hProcess is None:
-            self.print2( "\t[+] Unable to get process handle")
-            sys.exit(0)
-        self.print2("\t[+] Allocating space for DLL PATH")
-        DLL_PATH_ADDR = kernel32.VirtualAllocEx(hProcess, 
-                                                0,
-                                                LEN_DLL,
-                                                VIRTUAL_MEM,
-                                                PAGE_RW_PRIV)
-        bool_Written = c_int(0)
-        self.print2( "\t[+] Writing DLL PATH to current process space")
-        kernel32.WriteProcessMemory(hProcess,
-                                    DLL_PATH_ADDR,
-                                    self.DLL,
-                                    LEN_DLL,
-                                    byref(bool_Written))
-        self.print2( "\t[+] Resolving Call Specific functions & libraries")
-        kernel32DllHandler_addr = kernel32.GetModuleHandleA("kernel32")
-        self.print2( "\t\t[+] Resolved kernel32 library at 0x%08x" % kernel32DllHandler_addr)
-        LoadLibraryA_func_addr = kernel32.GetProcAddress(kernel32DllHandler_addr,"LoadLibraryA")
-        self.print2( "\t\t[+] Resolve LoadLibraryA function at 0x%08x" %LoadLibraryA_func_addr )
-        thread_id = c_ulong(0) # for our thread id
-        self.print2( "\t[+] Creating Remote Thread to load our DLL")
-        if not kernel32.CreateRemoteThread(hProcess,
-                                None,
-                                0,
-                                LoadLibraryA_func_addr,
-                                DLL_PATH_ADDR,
-                                0,
-                                byref(thread_id)):
-            self.print2( "[-] Injection Failed, exiting")
-            line = kernel32.GetLastError()
-            if line == "5" or line == 5:
-                self.print2("[*] Revieved error code 5, are trying to inject into 32 bit process from a 64 bit or vice versa...")
-        else:
-            self.print2( "[+] Remote Thread 0x%08x created, DLL code injected" % thread_id.value)
-
+        self.debugPrint("Using PID of %s" % self.PID)
         
     def popupOPEN2(self):
         self.file = tkFileDialog.askopenfile(mode='r',title='Select an executable',filetypes=[("Executable Files", "*.exe")] )
         self.OPEN = self.file.name
         self.OPENSTATE = True
-        self.print2("Application:%s" % self.OPEN)
+        self.debugPrint("Application:%s" % self.OPEN)
 
     def popupOPEN(self):
         self.w=popupWindowOPEN(self.master)
@@ -1113,7 +1047,7 @@ instruction))
         self.OPEN.strip("")
         self.OPEN.strip("\r")
         self.OPENSTATE = True
-        self.print2("Application:%s" % self.OPEN)
+        self.debugPrint("Application:%s" % self.OPEN)
 
     def popupEVENT1(self):
         t = threading.Thread(target=popupWindowEVENT(self.master))
@@ -1126,26 +1060,26 @@ instruction))
 
     def popupTHREAD(self):
         if self.PID == self.OPEN:
-            self.print2("[-] You must open or attach first...")
+            self.debugPrint("[-] You must open or attach first...")
             return False
         i = 0;
         for thread_id in dbg.enumerate_threads():
             thread_handle  = dbg.open_thread(thread_id)
             context = dbg.get_thread_context(thread_handle)
-            self.print2("[*] Dumping registers for threads:")
-            self.print2("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
-            self.print2("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
-            self.print2("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
-            self.print2("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
-            self.print2("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
-            self.print2("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
-            self.print2("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
+            self.debugPrint("[*] Dumping registers for threads:")
+            self.debugPrint("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
+            self.debugPrint("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
+            self.debugPrint("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
+            self.debugPrint("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
             i += 1
         line = dbg.seh_unwind()
         synopsis = "\n[+]SEH Chain\n"
         for (addr, handler_str) in line:
             synopsis +=  "\t%08x -> %s\n" % (addr, handler_str)
-        self.print2(synopsis)
+        self.debugPrint(synopsis)
             
     def export(self):
         data = self.textPad.get(1.0, 'end-1c').encode('utf-8')
@@ -1154,19 +1088,19 @@ instruction))
             file = open(line, "w")
             file.write(data)
             file.close()
-            self.print2("Exported to '%s'" % line)
+            self.debugPrint("Exported to '%s'" % line)
         elif self.OPEN is None:
             line = "Debugger-Data-%s.txt" % self.PID
             file = open(line, "w")
             file.write(data)
             file.close()
-            self.print2("Exported to '%s'" % line)
+            self.debugPrint("Exported to '%s'" % line)
         else:
             line = "Debugger-Data-for-who-knows-what.txt"
             file = open(line, "w")
             file.write(data)
             file.close()
-            self.print2("Exported to '%s'" % line)
+            self.debugPrint("Exported to '%s'" % line)
 
     def entryValue(self):
         return self.w.value
@@ -1179,7 +1113,7 @@ instruction))
         if self.libModeState:
             self.InitPyDBG()
             if self.OPENSTATE:
-                self.print2("[-]Unable to set breakpoints with 'open' method, try attaching")
+                self.debugPrint("[-]Unable to set breakpoints with 'open' method, try attaching")
                 data = "%s" % self.OPEN
                 t = threading.Thread(target=self.GetLib, args=(data,))
                 t.daemon = True
@@ -1302,8 +1236,7 @@ instruction))
         except TclError:
             print ' - rClickbinder, something wrong'
             pass
-        
-            
+
 class popupWindowPID(object):
     
     def __init__(self,master):
@@ -1317,22 +1250,7 @@ class popupWindowPID(object):
         self.e.bind('<Button-3>',self.rClicker, add='')
         self.b=Button(top,text='Ok',command=self.cleanup)
         self.b.pack()
-        #clipboard = self.clip()
-        #clipboard = clipboard.replace("", "\")
 
-        # delete the selected text, if any
-        #try:
-        #    start = self.e.index("sel.first")
-        #    end = self.e.index("sel.last")
-        #    self.e.delete(start, end)
-        #except TclError, e:
-        #    # nothing was selected, so paste doesn't need
-        #    # to delete anything
-        #    pass
-        #self.e.insert("insert", clipboard)
-        #self.e.pack()
-        #self.b=Button(top,text='Ok',command=self.cleanup)
-        #self.b.pack()
 
     def rClicker(self,e):
         ''' right click context menu for all Tk Entry and Text widgets
@@ -1386,6 +1304,7 @@ class popupWindowPID(object):
         self.top.destroy()
         print "[+]Added PID: %s" % self.value
         print "[*]Hit Start or select  a different engine from the debug menu"
+
 class popupWindowEVENT(object):
     
     def __init__(self,master):
@@ -2244,18 +2163,14 @@ class popupWindowSearchMemory(object):
 
 def main():
     root = Tk()
-    look = os.path.isfile('grade.ico')
+    look = os.path.isfile('debugger.ico')
     if (look == True):
-        root.iconbitmap(default='grade.ico')
-    else:
-        pass
+        root.iconbitmap(default='debugger.ico')
     root.geometry("750x450+300+300")
     print "[==Welcome to PyDebugger====]"
     print "[===Written by Starwarsfan2099]"
     print "[======Version: 3.1-1=========]"
-    print "[====Check out github.com/Starwarsfan2099 for more great tools]"
-    print "Help, errors, and other info will be displayed here(Plus the same info displayed in the main windows)"
-    app = Example(root)
+    app = debuggerMain(root)
     root.mainloop()
 
 
