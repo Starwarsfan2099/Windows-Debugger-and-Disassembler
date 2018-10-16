@@ -382,7 +382,7 @@ class debuggerMain(Frame):
 
     def serachFor(self,needle,cssnstv, textPad, t2,e) :
             self.textPad.tag_remove('match', '1.0', END)
-            count =0
+            count = 0
             if needle:
                     position = '1.0'
                     while True:
