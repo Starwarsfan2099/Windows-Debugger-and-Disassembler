@@ -1,23 +1,23 @@
 # encoding=utf8
 # Lots of imports for everything #
-import os
+from debuggerDefines import *
+from pydbg.defines import *
+from pydbg import *
+from cStringIO import StringIO
 from ScrolledText import *
 import tkFileDialog
 import tkMessageBox
 from Tkinter import *
 from ttk import Frame, Button, Label, Style
 global file, file2
-from debuggerDefines import *
 from ctypes import *
 import ctypes
 import Queue
 import threading
 import ast
 import win32clipboard
-from cStringIO import StringIO
+import os
 import sys
-from pydbg import *
-from pydbg.defines import *
 import struct
 import pydasm
 import pefile
@@ -34,10 +34,14 @@ import pythoncom
 import tempfile
 import binascii
 import psutil
+
+version = 3.1
 sleepTime = .00015
+
 # Initialize some constants for Windows functions and my debugger
 dbg = pydbg()
 kernel32 = windll.kernel32
+
 # List of words to search for when coloring text
 highlightWords = {'0x1 ': 'red',
                   '[0x1-> EXCEPTION_DEBUG_EVENT]': 'red',
@@ -69,12 +73,14 @@ highlightWords = {'0x1 ': 'red',
                   'PID:': 'blue'
                   }
 
-class debuggerMain(Frame):
-    
-    def __init__(self, parent):# Initilize the GUI
+
+class DebuggerMain(Frame):
+
+    def __init__(self, parent):
+
+        # Initialize the GUI
         Frame.__init__(self, parent)
         self.parent = parent
-        self.initUI()
         self.h_process       =     None
         self.pid             =     None
         self.debugger_active =     False
@@ -83,26 +89,6 @@ class debuggerMain(Frame):
         self.breakpoints     =     {}
         self.first_breakpoint=     True
         self.hardware_breakpoints = {}
-        
-        # Here let's determine and store 
-        # the default page size for the system
-        # determine the system page size.
-        system_info = SYSTEM_INFO()
-        kernel32.GetSystemInfo(byref(system_info))
-        self.page_size = system_info.dwPageSize
-        
-        # TODO: test
-        self.guarded_pages      = []
-        self.memory_breakpoints = {}
-        
-        self.OPENSTATE = False
-        self.libModeState = False
-        self.crashModeState = False
-        self.PYDBG = False
-        self.counter = 0
-        self.att = False
-
-    def initUI(self):# More GUI stuff
         self.diss = False
         self.OPEN = None
         self.PID = None
@@ -115,10 +101,33 @@ class debuggerMain(Frame):
         self.pauseModeVar = False
         self.coloring = True
         self.hide2 = False
-        # Titles and stuff
-        self.parent.title("Python Debugger")
+
+        # Here let's determine and store 
+        # the default page size for the system
+        # determine the system page size.
+        system_info = SYSTEM_INFO()
+        kernel32.GetSystemInfo(byref(system_info))
+        self.page_size = system_info.dwPageSize
+        
+        # TODO: test
+        self.guarded_pages      = []
+        self.memory_breakpoints = {}
+        
+        self.open_state = False
+        self.lib_mode_state = False
+        self.crash_mode_state = False
+        self.pydbg_mode = False
+        self.counter = 0
+        self.att = False
+
+        # More GUI stuff
         self.style = Style()
         self.style.theme_use("default")
+        self.textPad = ScrolledText(self)
+
+        # Titles and stuff
+        self.parent.title("Python Debugger")
+
         self.pack(fill=BOTH, expand=1)
 
         self.columnconfigure(1, weight=1)
@@ -129,92 +138,92 @@ class debuggerMain(Frame):
         lbl = Label(self, text="Debugger:")
         lbl.grid(sticky=W, pady=4, padx=5)
 
-        #lbl = Label(self, text="Average Grade:")
-        #lbl.grid(row=3, column=3, pady=5)
-
-        self.textPad = ScrolledText(self)
-        self.textPad.grid(row=1, column=0, columnspan=2, rowspan=4, padx=5, sticky=E+W+S+N)
+        self.textPad.grid(row=1, column=0, columnspan=2, rowspan=4, padx=5, sticky=E + W + S + N)
         # Buttons
-        abtn = Button(self, text="      Start       ",command=self.start)
+        abtn = Button(self, text="      Start       ", command=self.start)
         abtn.grid(row=1, column=3)
 
-        cbtn = Button(self, text="Register Info",command=self.popupTHREAD)
+        cbtn = Button(self, text="Register Info", command=self.popupTHREAD)
         cbtn.grid(row=2, column=3, pady=4)
-        cbtn = Button(self, text="Detach",command=self.detach2)
-        #cbtn.place(x=381, y=85)
+        cbtn = Button(self, text="Detach", command=self.detach2)
+        # cbtn.place(x=381, y=85)
         cbtn.grid(row=3, column=3, pady=4, padx=10)
 
         hbtn = Button(self, text="Help", command=self.about_command)
         hbtn.grid(row=5, column=0, padx=5)
 
-        obtn = Button(self, text="Close",command=self.onExit )
-        obtn.grid(row=5, column=3)        
+        obtn = Button(self, text="Close", command=self.onExit)
+        obtn.grid(row=5, column=3)
 
+        # Menu bar stuff
         menubar = Menu(self.parent)
         self.parent.config(menu=menubar)
 
-        fileMenu = Menu(menubar)       
-        # Menu bar stuff
-        submenu = Menu(fileMenu)
-        submenu2 = Menu(fileMenu)
-        dbgMenu = Menu(fileMenu)
-        injmenu = Menu(fileMenu)
-        monmenu = Menu(fileMenu)
-        dbgMenu.add_cascade(label='Engine Modes', menu=submenu, underline=0)
-        dbgMenu.add_command(label="Show Event Codes", command=self.popupEVENT1)
-        submenu.add_command(label="Use Defualt Debug Engine", command=self.defualt)
-        submenu.add_command(label="Crash Mode(Special Engine)", command=self.crashMode)
-        submenu.add_command(label="Created Files Mode(Special Engine)", command=self.libMode)
-        dbgMenu.add_command(label="Hide Debugger", command=self.hide)
-        dbgMenu.add_command(label="Change Registers", command=self.change)
-
-        breakpointMenu = Menu(fileMenu)
-        breakpointMenu.add_command(label="Show Breakpoints", command=self.showBreakpoints)
-        breakpointMenu.add_command(label="Pause at Breakpoints", command=self.pauseMode)
-        breakpointMenu.add_cascade(label="When a breakpoint is hit ", menu=submenu2, underline=0)
-        submenu2.add_command(label="Say 'Breakpoint Hit'", command=lambda: self.deal(1))
-        submenu2.add_command(label="SEH Unwind", command=lambda: self.deal(2))
-        submenu2.add_command(label="Stack Unwind", command=lambda: self.deal(3))
-        submenu2.add_command(label="Disassem Around", command=lambda: self.deal(4))
-        submenu2.add_command(label="All of the above + extra :)", command=lambda: self.deal(5))
-
-        injmenu.add_command(label="Inject dll", command=self.popupDLLWindow)
-        injmenu.add_command(label="Inject shellcode", command=self.codeInject)
-
-        monmenu.add_command(label="File Monitor", command=self.fileMonitor)
-        monmenu.add_command(label="Process Monitoer", command=self.processMonitor)
-        monmenu.add_command(label="List running procesess", command=self.processList)
-        
-        optionsMenu = Menu(fileMenu)
-        optionsMenu.add_command(label="Export", command=self.export)
-        optionsMenu.add_command(label="Clear", command=self.clear)
-        optionsMenu.add_command(label="Colors off", command=self.off)
-
-        dismenu = Menu(fileMenu)
-        dismenu.add_command(label="Dissasemble", command=self.disassemble3)
-        dismenu.add_command(label="Dissasemble Around", command=self.dissasembleAround)
-        dismenu.add_command(label="Show hex", command=self.showHex)
-
-        editMenu = Menu(fileMenu)
-        editMenu.add_command(label="Find", command=self.findAction)
-        
+        fileMenu = Menu(menubar)
         fileMenu.add_command(label="Attach", command=self.popupPID)
         fileMenu.add_command(label="Open", command=self.popupOPEN2)
         fileMenu.add_separator()
         fileMenu.add_command(label="Exit", underline=0, command=self.onExit)
 
+        editMenu = Menu(fileMenu)
+        editMenu.add_command(label="Find", command=self.findAction)
+
+        submenu = Menu(fileMenu)
+        submenu.add_command(label="Use Defualt Debug Engine", command=self.defualt)
+        submenu.add_command(label="Crash Mode(Special Engine)", command=self.crashMode)
+        submenu.add_command(label="Created Files Mode(Special Engine)", command=self.libMode)
+
+        dbgMenu = Menu(fileMenu)
+        dbgMenu.add_cascade(label='Engine Modes', menu=submenu, underline=0)
+        dbgMenu.add_command(label="Show Event Codes", command=self.popupEVENT1)
+        dbgMenu.add_command(label="Hide Debugger", command=self.hide)
+        dbgMenu.add_command(label="Change Registers", command=self.change)
+
+        submenu2 = Menu(fileMenu)
+        submenu2.add_command(label="Say 'Breakpoint Hit'", command=lambda: self.deal(1))
+        submenu2.add_command(label="SEH Unwind", command=lambda: self.deal(2))
+        submenu2.add_command(label="Stack Unwind", command=lambda: self.deal(3))
+        submenu2.add_command(label="Disassemble Around", command=lambda: self.deal(4))
+        submenu2.add_command(label="All of the above + extra :)", command=lambda: self.deal(5))
+
+        injectmenu = Menu(fileMenu)
+        injectmenu.add_command(label="Inject dll", command=self.popupDLLWindow)
+        injectmenu.add_command(label="Inject shellcode", command=self.codeInject)
+
+        monmenu = Menu(fileMenu)
+        monmenu.add_command(label="File Monitor", command=self.fileMonitor)
+        monmenu.add_command(label="Process Monitoer", command=self.processMonitor)
+        monmenu.add_command(label="List running procesess", command=self.processList)
+
+        breakpointMenu = Menu(fileMenu)
+        breakpointMenu.add_command(label="Show Breakpoints", command=self.showBreakpoints)
+        breakpointMenu.add_command(label="Pause at Breakpoints", command=self.pauseMode)
+        breakpointMenu.add_cascade(label="When a breakpoint is hit ", menu=submenu2, underline=0)
+
+        optionsMenu = Menu(fileMenu)
+        optionsMenu.add_command(label="Export", command=self.export)
+        optionsMenu.add_command(label="Clear", command=self.clear)
+        optionsMenu.add_command(label="Colors off", command=self.off)
+
+        dissmenu = Menu(fileMenu)
+        dissmenu.add_command(label="Disassemble", command=self.disassemble3)
+        dissmenu.add_command(label="Disassemble Around", command=self.dissasembleAround)
+        dissmenu.add_command(label="Show hex", command=self.showHex)
+
         menubar.add_cascade(label="File", underline=0, menu=fileMenu)
         menubar.add_cascade(label="Edit", underline=0, menu=editMenu)
         menubar.add_cascade(label="Debug", underline=0, menu=dbgMenu)
         menubar.add_cascade(label="Breakpoints", underline=0, menu=breakpointMenu)
-        menubar.add_cascade(label="Disassembly", underline=0, menu=dismenu)
-        menubar.add_cascade(label="Injection", underline=0, menu=injmenu)
+        menubar.add_cascade(label="Disassembly", underline=0, menu=dissmenu)
+        menubar.add_cascade(label="Injection", underline=0, menu=injectmenu)
         menubar.add_cascade(label="Monitoring", underline=0, menu=monmenu)
         menubar.add_cascade(label="Options", underline=0, menu=optionsMenu)
-        line = "Welcome to the PyDebugger version 3.1"
-        self.debugPrint(line)
+
         self.rClickbinder(self.textPad)
         self.textPad.bind("<Key>", self.highlighter)
+
+        line = "Welcome to the PyDebugger version %.1f" % version
+        self.debugPrint(line)
 
     def debugPrint(self, line):
         print line
@@ -249,9 +258,9 @@ class debuggerMain(Frame):
 
     def dissasembleAround(self):
         if self.PID == self.OPEN:
-            self.debugPrint("[-] For dissasembly around an address, you must be runing it...")
+            self.debugPrint("[-] For dissasembly around an address, you must be running it...")
             return False
-        self.w=popupWindowDISS(self.master)
+        self.w = popupWindowDISS(self.master)
         self.master.wait_window(self.w.top)
         address = self.w.value
         line = dbg.disasm_around(address)
@@ -270,13 +279,12 @@ class debuggerMain(Frame):
         t.start()
 
     def showHex2(self):
-        offset = 0
-        with open(self.OPEN,"rb") as f:
+        with open(self.OPEN, "rb") as f:
             block = f.read(self.blocksize)
-            str = ""
+            temp_str = ""
             for ch in block:
-                    str += hex(ord(ch))+" "
-            self.debugPrint(str)
+                    temp_str += hex(ord(ch))+" "
+            self.debugPrint(temp_str)
         
     def change(self):
         self.w=popupWindowCHANGE(self.master)
@@ -288,10 +296,11 @@ class debuggerMain(Frame):
         self.hide2 = True
     
     def popupDLLWindow(self):
-        print "Dll Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), trying to inject into a different bit process will produve an error"
-        #self.w=popupWindowDLL(self.master)
-        #self.master.wait_window(self.w.top)
-        #self.DLL = self.w.value
+        print "Dll Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), " \
+              "trying to inject into a different bit process will produce an error"
+        # self.w=popupWindowDLL(self.master)
+        # self.master.wait_window(self.w.top)
+        # self.DLL = self.w.value
         self.DLL = tkFileDialog.askopenfile(mode='r',title='Select a dll',filetypes=[("Dynamic Libraries", "*.dll")] )
         self.DLL = self.DLL.name.strip()
         print self.DLL
@@ -369,11 +378,8 @@ class debuggerMain(Frame):
             search_phrase_box.focus_set()
 
             c = IntVar()
-            Checkbutton(t2, text='Ignore Case', variable=c).grid(row=1, column=1,
-				   sticky='e', padx=2, pady=2)
-            Button(t2, text='Find All', underline=0, command=lambda: self.serachFor(v.get(), 
-			  c.get(), self.textPad, t2, search_phrase_box)).grid(
-			  row=0, column=2, sticky='e'+'w', padx=2, pady=2)
+            Checkbutton(t2, text='Ignore Case', variable=c).grid(row=1, column=1,sticky='e', padx=2, pady=2)
+            Button(t2, text='Find All', underline=0, command=lambda: self.serachFor(v.get(),c.get(), self.textPad, t2, search_phrase_box)).grid(row=0, column=2, sticky='e'+'w', padx=2, pady=2)
             def close_search():
                 textPad.tag_remove('match', '1.0', END)
                 t2.destroy()
@@ -406,7 +412,8 @@ class debuggerMain(Frame):
                 self.debugPrint("[+] Name:%s PID:%s     <==[Current Debugger Process] " % (name, pid))
         
     def codeInject(self):
-        print "[-] Code Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), trying to inject into a different bit process will produve an error"
+        print "[-] Code Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), " \
+              "trying to inject into a different bit process will produce an error"
         self.w=popupWindowINJECT(self.master)
         self.master.wait_window(self.w.top)
         self.shellcode = self.w.value.strip().strip("\n").strip("\r")
@@ -857,21 +864,21 @@ instruction))
 
     def crashMode(self):
         self.debugPrint("[+] Enabling crash mode")
-        self.crashModeState = True
-        self.libModeState = False
-        self.PYDBG = True
+        self.crash_mode_state = True
+        self.lib_mode_state = False
+        self.pydbg_mode = True
 
     def libMode(self):
         self.debugPrint("[+] Enabling Created Files mode")
-        self.libModeState = True
-        self.crashModeState = False
-        self.PYDBG = True
+        self.lib_mode_state = True
+        self.crash_mode_state = False
+        self.pydbg_mode = True
 
     def defualt(self):
         self.debugPrint("[+] Using default mode")
-        self.libModeState = False
-        self.PYDBG = False
-        self.crashModeState = False
+        self.lib_mode_state = False
+        self.pydbg_mode = False
+        self.crash_mode_state = False
 
     def disassemble3(self):
         label = tkMessageBox.showinfo("Info", "This will not print anything until it is done, so don't go anywhere! After its done hit Options then Export and it will send it to a file.")
@@ -1011,7 +1018,7 @@ instruction))
         if (self.PID == None):
             dbg.detach()
             self.debugPrint("Detached!!!")
-        elif (self.OPENSTATE == None):
+        elif (self.open_state == None):
             dbg.detach()
             self.debugPrint("Detached!!!")
         else:
@@ -1036,7 +1043,7 @@ instruction))
     def popupOPEN2(self):
         self.file = tkFileDialog.askopenfile(mode='r',title='Select an executable',filetypes=[("Executable Files", "*.exe")] )
         self.OPEN = self.file.name
-        self.OPENSTATE = True
+        self.open_state = True
         self.debugPrint("Application:%s" % self.OPEN)
 
     def popupOPEN(self):
@@ -1046,7 +1053,7 @@ instruction))
         self.OPEN.strip()
         self.OPEN.strip("")
         self.OPEN.strip("\r")
-        self.OPENSTATE = True
+        self.open_state = True
         self.debugPrint("Application:%s" % self.OPEN)
 
     def popupEVENT1(self):
@@ -1110,9 +1117,9 @@ instruction))
             self.pause = False
             self.breakmode = False
             return True
-        if self.libModeState:
+        if self.lib_mode_state:
             self.InitPyDBG()
-            if self.OPENSTATE:
+            if self.open_state:
                 self.debugPrint("[-]Unable to set breakpoints with 'open' method, try attaching")
                 data = "%s" % self.OPEN
                 t = threading.Thread(target=self.GetLib, args=(data,))
@@ -1125,9 +1132,9 @@ instruction))
                 t.daemon = True
                 t.start()
                 return True
-        if self.crashModeState:
+        if self.crash_mode_state:
             self.InitPyDBG()
-            if self.OPENSTATE:
+            if self.open_state:
                 data = "%s" % self.OPEN
                 t = threading.Thread(target=self.CrashDebug, args=(data,))
                 t.daemon = True
@@ -1142,7 +1149,7 @@ instruction))
                 t.start()
                 print "New Thread Started..."
                 return True
-        elif self.OPENSTATE:
+        elif self.open_state:
             self.InitPyDBG()
             t = threading.Thread(target=self.load, args=(self.OPEN,))
             t.daemon = True
@@ -2161,6 +2168,7 @@ class popupWindowSearchMemory(object):
         print "[+]\t\tAdded shellcode: %s" % self.value
         print "[*]Hit Start or select  a different engine from the debug menu"
 
+
 def main():
     root = Tk()
     look = os.path.isfile('debugger.ico')
@@ -2170,7 +2178,7 @@ def main():
     print "[==Welcome to PyDebugger====]"
     print "[===Written by Starwarsfan2099]"
     print "[======Version: 3.1-1=========]"
-    app = debuggerMain(root)
+    app = DebuggerMain(root)
     root.mainloop()
 
 
