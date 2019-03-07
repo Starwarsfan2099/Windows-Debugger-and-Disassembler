@@ -320,7 +320,7 @@ class DebuggerMain(Frame):
         kernel32 = windll.kernel32
         PID = int(self.dllPID)
         dllPath = str(self.DLL)
-        print "Dll path =%s=" % dllPath
+        print "Dll path: %s" % dllPath
         pageRWPriv = 0x04
         PROCESS_ALL_ACCESS = 0x1F0FFF
         virtualMemory = 0x3000
@@ -363,10 +363,14 @@ class DebuggerMain(Frame):
             self.debug_print("[-] Injection Failed, exiting with error code:%s" % line)
             if line == "5" or line == 5:
                 self.debug_print("[*] Revieved error code 5, you are trying to inject into 32 bit process from a 64 bit or vice versa...")
-            return False
+                return False
+            elif line == "4":
+                self.debug_print("[*] Revieved error code 4, you are trying to inject into a different priveleged process")
+                return False
         else:
             line = kernel32.GetLastError()
             self.debug_print("[+] Remote Thread 0x%08x created, DLL code injected with code:%s" % (thread_id.value, line))
+            return True
             
     def findAction(self):
             t2 = self.top = Toplevel(self)
@@ -434,7 +438,7 @@ class DebuggerMain(Frame):
         self.debug_print("[+] Attaching to process")
         process_handle = kernel32_variable.OpenProcess(process_all, False, self.PID)
         if process_handle is None:
-            self.debug_print( "[-] Unable to get process handle")
+            self.debug_print("[-] Unable to get process handle")
             return False
         memory_allocation_variable = kernel32_variable.VirtualAllocEx(process_handle, 0, shellcode_length, memcommit, page_rwx_value)
         kernel32_variable.WriteProcessMemory(process_handle, memory_allocation_variable, self.shellcode, shellcode_length, 0)
