@@ -55,7 +55,7 @@ highlightWords = {'0x1 ': 'red',
                   '[0x5-> EXIT_PROCESS_DEBUG_EVENT]': 'red',
                   '0x6 ': 'blue',
                   'DLL Loaded': 'blue',
-                  '[0x6-> LOAD_DLL_DEBUG_EVENT]':'blue',
+                  '[0x6-> LOAD_DLL_DEBUG_EVENT]': 'blue',
                   '0x7 ': 'orange',
                   '[0x7-> UNLOAD_DLL_DEBUG_EVENT]': 'orange',
                   '0x8 ': 'green',
@@ -81,26 +81,27 @@ class DebuggerMain(Frame):
         # Initialize the GUI
         Frame.__init__(self, parent)
         self.parent = parent
-        self.h_process       =     None
-        self.pid             =     None
-        self.debugger_active =     False
-        self.h_thread        =     None
-        self.context         =     None
-        self.breakpoints     =     {}
-        self.first_breakpoint=     True
-        self.hardware_breakpoints = {}
-        self.diss = False
-        self.OPEN = None
-        self.PID = None
-        self.nocolor = False
-        self.crash = False
-        self.CheckRun = True
-        self.BreakFunk = 1
-        self.breakmode = False
-        self.pause = False
-        self.pauseModeVar = False
-        self.coloring = True
-        self.hide2 = False
+        self.h_process              =   None
+        self.pid                    =   None
+        self.debugger_active        =   False
+        self.h_thread               =   None
+        self.context                =   None
+        self.breakpoints            =   {}
+        self.first_breakpoint       =   True
+        self.hardware_breakpoints   =   {}
+        self.diss                   =   False
+        self.OPEN                   =   None
+        self.PID                    =   None
+        self.nocolor                =   False
+        self.crash                  =   False
+        self.CheckRun               =   True
+        self.BreakFunk              =   1
+        self.breakmode              =   False
+        self.pause                  =   False
+        self.pauseModeVar           =   False
+        self.coloring               =   True
+        self.hide2                  =   False
+        self.blocksize              =   1024
 
         # Here let's determine and store 
         # the default page size for the system
@@ -132,236 +133,240 @@ class DebuggerMain(Frame):
 
         self.columnconfigure(1, weight=1)
         self.columnconfigure(3, pad=7)
+
         self.rowconfigure(3, weight=1)
         self.rowconfigure(5, pad=7)
 
         lbl = Label(self, text="Debugger:")
         lbl.grid(sticky=W, pady=4, padx=5)
 
+        # Text Pad
         self.textPad.grid(row=1, column=0, columnspan=2, rowspan=4, padx=5, sticky=E + W + S + N)
+
         # Buttons
-        abtn = Button(self, text="      Start       ", command=self.start)
-        abtn.grid(row=1, column=3)
+        start_button = Button(self, text="       Start       ", command=self.start)
+        start_button.grid(row=1, column=3)
 
-        cbtn = Button(self, text="Register Info", command=self.popupTHREAD)
-        cbtn.grid(row=2, column=3, pady=4)
-        cbtn = Button(self, text="Detach", command=self.detach2)
-        # cbtn.place(x=381, y=85)
-        cbtn.grid(row=3, column=3, pady=4, padx=10)
+        register_button = Button(self, text="Register Info", command=self.popupTHREAD)
+        register_button.grid(row=2, column=3, pady=4)
 
-        hbtn = Button(self, text="Help", command=self.about_command)
-        hbtn.grid(row=5, column=0, padx=5)
+        detach_button = Button(self, text="Detach", command=self.detach2)
+        detach_button.grid(row=3, column=3, pady=4, padx=10)
 
-        obtn = Button(self, text="Close", command=self.onExit)
-        obtn.grid(row=5, column=3)
+        help_button = Button(self, text="Help", command=self.about_command)
+        help_button.grid(row=5, column=0, padx=5)
+
+        close_button = Button(self, text="Close", command=self.onExit)
+        close_button.grid(row=5, column=3)
 
         # Menu bar stuff
-        menubar = Menu(self.parent)
-        self.parent.config(menu=menubar)
+        menu_bar = Menu(self.parent)
+        self.parent.config(menu=menu_bar)
 
-        fileMenu = Menu(menubar)
-        fileMenu.add_command(label="Attach", command=self.popupPID)
-        fileMenu.add_command(label="Open", command=self.popupOPEN2)
-        fileMenu.add_separator()
-        fileMenu.add_command(label="Exit", underline=0, command=self.onExit)
+        file_menu = Menu(menu_bar)
+        file_menu.add_command(label="Attach", command=self.popupPID)
+        file_menu.add_command(label="Open", command=self.popupOPEN2)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", underline=0, command=self.onExit)
 
-        editMenu = Menu(fileMenu)
-        editMenu.add_command(label="Find", command=self.findAction)
+        edit_menu = Menu(file_menu)
+        edit_menu.add_command(label="Find", command=self.findAction)
 
-        submenu = Menu(fileMenu)
-        submenu.add_command(label="Use Defualt Debug Engine", command=self.defualt)
-        submenu.add_command(label="Crash Mode(Special Engine)", command=self.crashMode)
-        submenu.add_command(label="Created Files Mode(Special Engine)", command=self.libMode)
+        engine_mode_menu = Menu(file_menu)
+        engine_mode_menu.add_command(label="Use Default Debug Engine", command=self.defualt)
+        engine_mode_menu.add_command(label="Crash Mode(Special Engine)", command=self.crashMode)
+        engine_mode_menu.add_command(label="Created Files Mode(Special Engine)", command=self.libMode)
 
-        dbgMenu = Menu(fileMenu)
-        dbgMenu.add_cascade(label='Engine Modes', menu=submenu, underline=0)
-        dbgMenu.add_command(label="Show Event Codes", command=self.popupEVENT1)
-        dbgMenu.add_command(label="Hide Debugger", command=self.hide)
-        dbgMenu.add_command(label="Change Registers", command=self.change)
+        debug_menu = Menu(file_menu)
+        debug_menu.add_cascade(label='Engine Modes', menu=engine_mode_menu, underline=0)
+        debug_menu.add_command(label="Show Event Codes", command=self.popupEVENT1)
+        debug_menu.add_command(label="Hide Debugger", command=self.hide)
+        debug_menu.add_command(label="Change Registers", command=self.change)
 
-        submenu2 = Menu(fileMenu)
-        submenu2.add_command(label="Say 'Breakpoint Hit'", command=lambda: self.deal(1))
-        submenu2.add_command(label="SEH Unwind", command=lambda: self.deal(2))
-        submenu2.add_command(label="Stack Unwind", command=lambda: self.deal(3))
-        submenu2.add_command(label="Disassemble Around", command=lambda: self.deal(4))
-        submenu2.add_command(label="All of the above + extra :)", command=lambda: self.deal(5))
+        breakpoint_mode_menu = Menu(file_menu)
+        breakpoint_mode_menu.add_command(label="Say 'Breakpoint Hit'", command=lambda: self.deal(1))
+        breakpoint_mode_menu.add_command(label="SEH Unwind", command=lambda: self.deal(2))
+        breakpoint_mode_menu.add_command(label="Stack Unwind", command=lambda: self.deal(3))
+        breakpoint_mode_menu.add_command(label="Disassemble Around", command=lambda: self.deal(4))
+        breakpoint_mode_menu.add_command(label="All of the above + extra :)", command=lambda: self.deal(5))
 
-        injectmenu = Menu(fileMenu)
-        injectmenu.add_command(label="Inject dll", command=self.popupDLLWindow)
-        injectmenu.add_command(label="Inject shellcode", command=self.codeInject)
+        inject_menu = Menu(file_menu)
+        inject_menu.add_command(label="Inject dll", command=self.popupDLLWindow)
+        inject_menu.add_command(label="Inject shellcode", command=self.codeInject)
 
-        monmenu = Menu(fileMenu)
-        monmenu.add_command(label="File Monitor", command=self.fileMonitor)
-        monmenu.add_command(label="Process Monitoer", command=self.processMonitor)
-        monmenu.add_command(label="List running procesess", command=self.processList)
+        monitor_menu = Menu(file_menu)
+        monitor_menu.add_command(label="File Monitor", command=self.fileMonitor)
+        monitor_menu.add_command(label="Process Monitor", command=self.processMonitor)
+        monitor_menu.add_command(label="List running processes", command=self.processList)
 
-        breakpointMenu = Menu(fileMenu)
-        breakpointMenu.add_command(label="Show Breakpoints", command=self.showBreakpoints)
-        breakpointMenu.add_command(label="Pause at Breakpoints", command=self.pauseMode)
-        breakpointMenu.add_cascade(label="When a breakpoint is hit ", menu=submenu2, underline=0)
+        breakpoint_menu = Menu(file_menu)
+        breakpoint_menu.add_command(label="Show Breakpoints", command=self.showBreakpoints)
+        breakpoint_menu.add_command(label="Pause at Breakpoints", command=self.pauseMode)
+        breakpoint_menu.add_cascade(label="When a breakpoint is hit ", menu=breakpoint_mode_menu, underline=0)
 
-        optionsMenu = Menu(fileMenu)
-        optionsMenu.add_command(label="Export", command=self.export)
-        optionsMenu.add_command(label="Clear", command=self.clear)
-        optionsMenu.add_command(label="Colors off", command=self.off)
+        options_menu = Menu(file_menu)
+        options_menu.add_command(label="Export", command=self.export)
+        options_menu.add_command(label="Clear", command=self.clear)
+        options_menu.add_command(label="Colors off", command=self.off)
 
-        dissmenu = Menu(fileMenu)
-        dissmenu.add_command(label="Disassemble", command=self.disassemble3)
-        dissmenu.add_command(label="Disassemble Around", command=self.dissasembleAround)
-        dissmenu.add_command(label="Show hex", command=self.showHex)
+        disassemble_menu = Menu(file_menu)
+        disassemble_menu.add_command(label="Disassemble", command=self.disassemble3)
+        disassemble_menu.add_command(label="Disassemble Around", command=self.disassemble_around)
+        disassemble_menu.add_command(label="Show hex", command=self.show_hex)
 
-        menubar.add_cascade(label="File", underline=0, menu=fileMenu)
-        menubar.add_cascade(label="Edit", underline=0, menu=editMenu)
-        menubar.add_cascade(label="Debug", underline=0, menu=dbgMenu)
-        menubar.add_cascade(label="Breakpoints", underline=0, menu=breakpointMenu)
-        menubar.add_cascade(label="Disassembly", underline=0, menu=dissmenu)
-        menubar.add_cascade(label="Injection", underline=0, menu=injectmenu)
-        menubar.add_cascade(label="Monitoring", underline=0, menu=monmenu)
-        menubar.add_cascade(label="Options", underline=0, menu=optionsMenu)
+        menu_bar.add_cascade(label="File", underline=0, menu=file_menu)
+        menu_bar.add_cascade(label="Edit", underline=0, menu=edit_menu)
+        menu_bar.add_cascade(label="Debug", underline=0, menu=debug_menu)
+        menu_bar.add_cascade(label="Breakpoints", underline=0, menu=breakpoint_menu)
+        menu_bar.add_cascade(label="Disassembly", underline=0, menu=disassemble_menu)
+        menu_bar.add_cascade(label="Injection", underline=0, menu=inject_menu)
+        menu_bar.add_cascade(label="Monitoring", underline=0, menu=monitor_menu)
+        menu_bar.add_cascade(label="Options", underline=0, menu=options_menu)
 
+        # Bind right click options
         self.rClickbinder(self.textPad)
-        self.textPad.bind("<Key>", self.highlighter)
+
+        # TODO: Test for cause of crash when highlighting is enabled.
+        # self.textPad.bind("<Key>", self.highlighter)
 
         line = "Welcome to the PyDebugger version %.1f" % version
-        self.debugPrint(line)
+        self.debug_print(line)
 
-    def debugPrint(self, line):
+    def debug_print(self, line):
         print line
         try:
             line.strip("\n")
             line = "{}\n".format(line)
-            #line = "" + line
-        except:
-            pass   #Probably a list 
+        except AttributeError:
+            line = "[-] Error: Passed a list to print\n"
         self.textPad.insert('1.0', line)
-        self.highlighter(1)
+        self.highlighter()
         time.sleep(sleepTime)
 
-    def highlighter(self, r):
+    def highlighter(self):
+        # Iterates over list of certain words to color and colors them in the textpadq
         if not self.coloring:
             return False
-        for k,v in highlightWords.iteritems(): # iterate over dict
-            startIndex = '1.0'
-            try:
-                while True:
-                    startIndex = self.textPad.search(k, startIndex, END) # search for occurence of k
-                    if startIndex:
-                        endIndex = self.textPad.index('%s+%dc' % (startIndex, (len(k)))) # find end of k
-                        self.textPad.tag_add(k, startIndex, endIndex) # add tag to k
-                        self.textPad.tag_config(k, foreground=v)      # and color it with v
-                        startIndex = endIndex # reset startIndex to continue searching
-                    else:
-                        break
-            except:
-                pass
+        for trigger, color in highlightWords.iteritems():
+            start_index = '1.0'
+            while True:
+                # search for occurrence of a trigger word
+                start_index = self.textPad.search(trigger, start_index, END)
+                if start_index:
+                    # find end of k
+                    end_index = self.textPad.index('%s+%dc' % (start_index, (len(trigger))))
+                    # add tag to k
+                    self.textPad.tag_add(trigger, start_index, end_index)
+                    # and color it with the color
+                    self.textPad.tag_config(trigger, foreground=color)
+                    # reset start_index to continue searching
+                    start_index = end_index
+                else:
+                    break
         return True
 
-    def dissasembleAround(self):
+    def disassemble_around(self):
         if self.PID == self.OPEN:
-            self.debugPrint("[-] For dissasembly around an address, you must be running it...")
+            self.debug_print("[-] For disassembly around an address, you must be running it...")
             return False
-        self.w = popupWindowDISS(self.master)
-        self.master.wait_window(self.w.top)
-        address = self.w.value
+        self.disassemble_around_window = popupWindowDISS(self.master)
+        self.master.wait_window(self.disassemble_around_window.top)
+        address = self.disassemble_around_window.value
         line = dbg.disasm_around(address)
-        self.debugPrint(line)
+        self.debug_print(line)
 
-    def showHex(self):
-        self.blocksize = 1024
-        if self.OPEN == None:
-            self.debugPrint("[-] You must open an executable first.")
+    def show_hex(self):
+        if self.OPEN is None:
+            self.debug_print("[-] You must open an executable first.")
             return False
-        self.w=popupWindowHEX(self.master)
-        self.master.wait_window(self.w.top)
-        self.debugPrint("[*] Converting...")
-        t = threading.Thread(target=self.showHex2)
+        self.show_hex_window = popupWindowHEX(self.master)
+        self.master.wait_window(self.show_hex_window.top)
+        self.debug_print("[*] Converting...")
+        t = threading.Thread(target=self.show_hex2)
         t.daemon = True
         t.start()
 
-    def showHex2(self):
+    def show_hex2(self):
         with open(self.OPEN, "rb") as f:
             block = f.read(self.blocksize)
             temp_str = ""
             for ch in block:
                     temp_str += hex(ord(ch))+" "
-            self.debugPrint(temp_str)
+            self.debug_print(temp_str)
         
     def change(self):
         self.w=popupWindowCHANGE(self.master)
         self.master.wait_window(self.w.top)
 
     def hide(self):
-        self.debugPrint("[-] Warning, This only works with attaching, not opening-May cause errors.")
-        self.debugPrint("[*] Debugger will hide it's self after the first breakpoint, you will get a message.")
+        self.debug_print("[-] Warning, This only works with attaching, not opening - May cause errors.")
+        self.debug_print("[*] Debugger will hide it's self after the first breakpoint, you will get a message.")
         self.hide2 = True
     
     def popupDLLWindow(self):
         print "Dll Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), " \
               "trying to inject into a different bit process will produce an error"
-        # self.w=popupWindowDLL(self.master)
-        # self.master.wait_window(self.w.top)
-        # self.DLL = self.w.value
-        self.DLL = tkFileDialog.askopenfile(mode='r',title='Select a dll',filetypes=[("Dynamic Libraries", "*.dll")] )
+        self.DLL = tkFileDialog.askopenfile(mode='r', title='Select a dll', filetypes=[("Dynamic Libraries", "*.dll")])
         self.DLL = self.DLL.name.strip()
         print self.DLL
-        self.w=popupWindowDLL2(self.master)
+        self.w = popupWindowDLL2(self.master)
         self.master.wait_window(self.w.top)
-        self.DLLPID = int(self.w.value)
-        if self.DLLPID == "":
+        self.dllPID = int(self.w.value)
+        if self.dllPID == "":
             if self.PID:
-                self.DLLPID = self.PID
+                self.dllPID = self.PID
             else:
-                label = tkMessageBox.showinfo("Error", "You must attach or input a pid to inject a dll")
+                tkMessageBox.showinfo("Error", "You must attach or input a pid to inject a dll")
         kernel32 = windll.kernel32
-        PID = int(self.DLLPID)
-        DLL_PATH = str(self.DLL)
-        print "Dll path =%s=" % DLL_PATH
-        PAGE_RW_PRIV = 0x04
+        PID = int(self.dllPID)
+        dllPath = str(self.DLL)
+        print "Dll path =%s=" % dllPath
+        pageRWPriv = 0x04
         PROCESS_ALL_ACCESS = 0x1F0FFF
-        VIRTUAL_MEM = 0x3000
-        self.debugPrint( "[+] Starting DLL Injector")
-        LEN_DLL = len(self.DLL)# get the length of the DLL PATH 
-        self.debugPrint( "[+] Getting process handle for PID:%d " % PID)
-        hProcess = kernel32.OpenProcess(PROCESS_ALL_ACCESS,False,PID)
+        virtualMemory = 0x3000
+        self.debug_print("[+] Starting DLL Injector")
+        dllLength = len(self.DLL)  # get the length of the DLL PATH
+        self.debug_print("[+] Getting process handle for PID:%d " % PID)
+        hProcess = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, PID)
      
         if hProcess is None:
-            self.debugPrint( "[+] Unable to get process handle")
+            self.debug_print("[+] Unable to get process handle")
             return False
-        self.debugPrint( "[+] Allocating space for DLL PATH")
-        DLL_PATH_ADDR = kernel32.VirtualAllocEx(hProcess, 
+        self.debug_print("[+] Allocating space for DLL PATH")
+        dllPathAddress = kernel32.VirtualAllocEx(hProcess, 
                                                 0,
-                                                LEN_DLL,
-                                                VIRTUAL_MEM,
-                                                PAGE_RW_PRIV)
+                                                dllLength,
+                                                virtualMemory,
+                                                pageRWPriv)
         bool_Written = c_int(0)
-        self.debugPrint( "|--[+] Writing DLL PATH to current process space")
+        self.debug_print("[+] Writing DLL PATH to current process space")
         kernel32.WriteProcessMemory(hProcess,
-                                    DLL_PATH_ADDR,
-                                    DLL_PATH,
-                                    LEN_DLL,
+                                    dllPathAddress,
+                                    dllPath,
+                                    dllLength,
                                     byref(bool_Written))
-        self.debugPrint( "[+] Resolving Call Specific functions & libraries")
+        self.debug_print("[+] Resolving Call Specific functions & libraries")
         kernel32DllHandler_addr = kernel32.GetModuleHandleA("kernel32")
-        self.debugPrint( "|--[+] Resolved kernel32 library at 0x%08x" % kernel32DllHandler_addr)
+        self.debug_print("[+] Resolved kernel32 library at 0x%08x" % kernel32DllHandler_addr)
         LoadLibraryA_func_addr = kernel32.GetProcAddress(kernel32DllHandler_addr,"LoadLibraryA")
-        self.debugPrint( "  |--[+] Resolve LoadLibraryA function at 0x%08x" %LoadLibraryA_func_addr)
-        thread_id = c_ulong(0) # for our thread id
-        self.debugPrint( "[+] Creating Remote Thread to load our DLL")
+        self.debug_print("[+] Resolve LoadLibraryA function at 0x%08x" %LoadLibraryA_func_addr)
+        thread_id = c_ulong(0)  # for our thread id
+        self.debug_print("[+] Creating Remote Thread to load our DLL")
         if not kernel32.CreateRemoteThread(hProcess,
                                     None,
                                     0,
                                     LoadLibraryA_func_addr,
-                                    DLL_PATH_ADDR,
+                                    dllPathAddress,
                                     0,
                                     byref(thread_id)):
             line = kernel32.GetLastError()
-            self.debugPrint( "[-] Injection Failed, exiting with error code:%s" % line)
+            self.debug_print("[-] Injection Failed, exiting with error code:%s" % line)
             if line == "5" or line == 5:
-                self.debugPrint("[*] Revieved error code 5, you are trying to inject into 32 bit process from a 64 bit or vice versa...")
+                self.debug_print("[*] Revieved error code 5, you are trying to inject into 32 bit process from a 64 bit or vice versa...")
             return False
         else:
             line = kernel32.GetLastError()
-            self.debugPrint( "|--[+] Remote Thread 0x%08x created, DLL code injected with code:%s" % (thread_id.value, line))
+            self.debug_print("[+] Remote Thread 0x%08x created, DLL code injected with code:%s" % (thread_id.value, line))
             
     def findAction(self):
             t2 = self.top = Toplevel(self)
@@ -404,12 +409,12 @@ class DebuggerMain(Frame):
             
     def processList(self):
         self.clear()
-        self.debugPrint("[+] Getting Process List...")
+        self.debug_print("[+] Getting Process List...")
         for (pid, name) in dbg.enumerate_processes():
             if (pid != os.getpid()):
-                self.debugPrint("[+] Name:%s PID:%s" % (name, pid))
+                self.debug_print("[+] Name:%s PID:%s" % (name, pid))
             else:
-                self.debugPrint("[+] Name:%s PID:%s     <==[Current Debugger Process] " % (name, pid))
+                self.debug_print("[+] Name:%s PID:%s     <==[Current Debugger Process] " % (name, pid))
         
     def codeInject(self):
         print "[-] Code Injection only works for same bit process(ie. 32-32 bit or 64-64 bit), " \
@@ -425,17 +430,17 @@ class DebuggerMain(Frame):
         memcommit = 0x00001000
         kernel32_variable = windll.kernel32
         shellcode_length = len(self.shellcode)
-        self.debugPrint("[*] Shellcode length:%s" % shellcode_length)
-        self.debugPrint("[+] Attaching to process")
+        self.debug_print("[*] Shellcode length:%s" % shellcode_length)
+        self.debug_print("[+] Attaching to process")
         process_handle = kernel32_variable.OpenProcess(process_all, False, self.PID)
         if process_handle is None:
-            self.debugPrint( "[-] Unable to get process handle")
+            self.debug_print( "[-] Unable to get process handle")
             return False
         memory_allocation_variable = kernel32_variable.VirtualAllocEx(process_handle, 0, shellcode_length, memcommit, page_rwx_value)
         kernel32_variable.WriteProcessMemory(process_handle, memory_allocation_variable, self.shellcode, shellcode_length, 0)
-        self.debugPrint("|--[+] Creating remote thread")
+        self.debug_print("[+] Creating remote thread")
         kernel32_variable.CreateRemoteThread(process_handle, None, 0, memory_allocation_variable, 0, 0, 0)
-        self.debugPrint("[+] Shellcode should be injected now")
+        self.debug_print("[+] Shellcode should be injected now")
 
 
 
@@ -463,11 +468,10 @@ class DebuggerMain(Frame):
         for path in dirs_to_monitor:
             monitor_thread = threading.Thread(target=self.startFileMonitor,args=(path,))
             monitor_thread.daemon = True
-            self.debugPrint( "[+] Spawning monitoring thread for path: %s" % path)
+            self.debug_print( "[+] Spawning monitoring thread for path: %s" % path)
             monitor_thread.start()
 
     def injectCode(self,full_filename,extension,contents):
-    
     # is our marker already in the file?
         if file_types[extension][0] in contents:
             return
@@ -478,7 +482,7 @@ class DebuggerMain(Frame):
         fd = open(full_filename,"wb")
         fd.write(full_contents)
         fd.close()
-        self.debugPrint( "[\o/] Injected code.")
+        self.debug_print( "[\o/] Injected code.")
         return
     
     def startFileMonitor(self,path_to_watch):
@@ -522,26 +526,26 @@ class DebuggerMain(Frame):
                     full_filename = os.path.join(path_to_watch, file_name)
                     if action == FILE_CREATED:
                         line = ("[+] Created %s" % full_filename)
-                        self.debugPrint(line)
+                        self.debug_print(line)
                     elif action == FILE_DELETED:
                         line = ("[-] Deleted %s" % full_filename)
-                        self.debugPrint(line)
+                        self.debug_print(line)
                     elif action == FILE_MODIFIED:
                         line = ("[*] Modified %s" % full_filename)
-                        self.debugPrint(line)
+                        self.debug_print(line)
                     # dump out the file contents
                         line = ("[vvv] Dumping contents...")
-                        self.debugPrint(line)
+                        self.debug_print(line)
                         try:
                             fd = open(full_filename,"rb")
                             contents = fd.read()
                             fd.close()
-                            self.debugPrint( contents)
+                            self.debug_print( contents)
                             line = ("[^^^] Dump complete.")
-                            self.debugPrint(line)
+                            self.debug_print(line)
                         except:
                             line = ("[!!!] Failed.")
-                            self.debugPrint(line)
+                            self.debug_print(line)
                     
                         filename,extension = os.path.splitext(full_filename)
                     
@@ -550,18 +554,18 @@ class DebuggerMain(Frame):
                     
                     elif action == FILE_RENAMED_FROM:
                         line = ("[>] Renamed from: %s" % full_filename)
-                        self.debugPrint(line)
+                        self.debug_print(line)
                     elif action == FILE_RENAMED_TO:
                         line = ("[<] Renamed to: %s" % full_filename)
-                        self.debugPrint(line)
+                        self.debug_print(line)
                     else:
                         line = ("[?] Unknown: %s" % full_filename)
-                        self.debugPrint(line)
+                        self.debug_print(line)
             except:
                 pass
 
     def processMonitor(self):
-        self.debugPrint("[+] Starting process monitor")
+        self.debug_print("[+] Starting process monitor")
         t = threading.Thread(target=self.processMonitor2)
         t.daemon = True
         t.start()
@@ -607,26 +611,26 @@ class DebuggerMain(Frame):
 
                 process_log_message = "\n[+] Date: %s,\n[+] Process Owner:%s,\n[+] Executable:%s,\n[+] Cmd line opts:%s,\n[+] PID:%s,\n[+] Parent PID:%s,\n[+] Privs:%s" % (create_date, proc_owner, executable, cmdline, pid, parent_pid,privileges)
 
-                self.debugPrint( "%s\r\n" % process_log_message)
+                self.debug_print( "%s\r\n" % process_log_message)
             except:
                 pass
 
     def dummy(self):
-        self.debugPrint("Not ready yet...")
+        self.debug_print("Not ready yet...")
 
     def disassem(self, dbg):
-        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        self.debug_print("[+]Hit a breakpoint at %s" % dbg.exception_address)
         line = dbg.disasm_around(dbg.exception_address)
         synop = "\nDissasembled around breakpoint instruction\n"
         for (ea, inst) in line:
             synop += "\t0x%08x %s\n" % (ea, inst)
-        self.debugPrint(synop)
+        self.debug_print(synop)
         self.wait()
         return DBG_CONTINUE
 
     def pauseMode(self):
         self.pauseModeVar = True
-        self.debugPrint("[*]Will pause at breakpoints")
+        self.debug_print("[*]Will pause at breakpoints")
 
     def deal(self, num):
         self.BreakFunk = num
@@ -639,61 +643,61 @@ class DebuggerMain(Frame):
             fill = 1
             while self.pause:
                 fill = fill + 1 - 1
-            self.debugPrint("[*] Continuing")
+            self.debug_print("[*] Continuing")
 
     def SEH_unwind(self, dbg):
-        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
-        #self.debugPrint("[+]SEH Chain")
+        self.debug_print("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        #self.debug_print("[+]SEH Chain")
         line = dbg.seh_unwind()
         synopsis = "\n[+]SEH Chain\n"
         for (addr, handler_str) in line:
             synopsis +=  "\t%08x -> %s\n" % (addr, handler_str)
-        self.debugPrint(synopsis)
+        self.debug_print(synopsis)
         self.wait()
         return DBG_CONTINUE
 
     def dump_info(self, dbg):
-        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        self.debug_print("[+]Hit a breakpoint at %s" % dbg.exception_address)
         info = dbg.stack_unwind()
         synop1 = "\nStack Unwind\n"
         for entry in info:
                 synop1 += "\t%s\n" % entry
-        self.debugPrint(synop1)
+        self.debug_print(synop1)
         self.wait()
         return DBG_CONTINUE
 
     def all_info(self, dbg):
-        self.debugPrint("[+]Hit a breakpoint at %s" % dbg.exception_address)
-        #self.debugPrint("[+]SEH Chain")
+        self.debug_print("[+]Hit a breakpoint at %s" % dbg.exception_address)
+        #self.debug_print("[+]SEH Chain")
         line = dbg.seh_unwind()
         synopsis = "\n[+]SEH Chain\n"
         for (addr, handler_str) in line:
             synopsis +=  "\t%08x -> %s\n" % (addr, handler_str)
-        self.debugPrint(synopsis)
+        self.debug_print(synopsis)
         info = dbg.stack_unwind()
         synop1 = "\nStack Unwind\n"
         for entry in info:
                 synop1 += "\t%s\n" % entry
-        self.debugPrint(synop1)
+        self.debug_print(synop1)
         line = dbg.disasm_around(dbg.exception_address)
         synop = "\nDissasembled around breakpoint instruction\n"
         for (ea, inst) in line:
             synop += "\t0x%08x %s\n" % (ea, inst)
-        self.debugPrint(synop)
+        self.debug_print(synop)
         i = 0;
         for thread_id in dbg.enumerate_threads():
             thread_handle  = dbg.open_thread(thread_id)
             context = dbg.get_thread_context(thread_handle)
-            self.debugPrint("[*] Dumping registers for threads:")
-            self.debugPrint("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
-            self.debugPrint("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
-            self.debugPrint("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EDI: %08x" % (i,thread_handle,context.Edi))
-            self.debugPrint("[**] Thread ID:%03d:: %08x ESI: %08x" % (i,thread_handle,context.Esi))
+            self.debug_print("[*] Dumping registers for threads:")
+            self.debug_print("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
+            self.debug_print("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
+            self.debug_print("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
+            self.debug_print("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
+            self.debug_print("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
+            self.debug_print("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
+            self.debug_print("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
+            self.debug_print("[**] Thread ID:%03d:: %08x EDI: %08x" % (i,thread_handle,context.Edi))
+            self.debug_print("[**] Thread ID:%03d:: %08x ESI: %08x" % (i,thread_handle,context.Esi))
             i += 1
         self.wait()
         return DBG_CONTINUE
@@ -702,54 +706,54 @@ class DebuggerMain(Frame):
         try:
             file = open("Breakpoints.txt", "r")
         except:
-            self.debugPrint("Could not find Breakpoints.txt, no breakpoint setting...")
+            self.debug_print("Could not find Breakpoints.txt, no breakpoint setting...")
             pass
         for line in file.readlines():
             line = re.sub("[^\w]", " ",  line).split()
-            self.debugPrint("[*] Breakpoint on %s in %s." % (line[2], line[0] + "." + line[1]))
+            self.debug_print("[*] Breakpoint on %s in %s." % (line[2], line[0] + "." + line[1]))
 
     def get_dlls(self):
         for modules in pydbg().enumerate_modules():
             if self.CheckRun:
-                self.debugPrint("[*] Executable > %s" % modules[0])
+                self.debug_print("[*] Executable > %s" % modules[0])
                 self.CheckRun = False
             else:
-                self.debugPrint("[+] DLL Loaded(%s) > %s" % (modules[1],modules[0]))
+                self.debug_print("[+] DLL Loaded(%s) > %s" % (modules[1],modules[0]))
             time.sleep(.005)
 
     def handler_breakpoint(self, dbg):
-        self.debugPrint("[+] Hit a breakpoint")
+        self.debug_print("[+] Hit a breakpoint")
         print dbg
         return DBG_CONTINUE
 
     def InitPyDBG(self):
         def one(dbg):
-            self.debugPrint("[0x1-> EXCEPTION_DEBUG_EVENT]")
+            self.debug_print("[0x1-> EXCEPTION_DEBUG_EVENT]")
             return DBG_CONTINUE
         def two(dbg):
-            self.debugPrint("[0x2-> CREATE_THREAD_DEBUG_EVENT]")
+            self.debug_print("[0x2-> CREATE_THREAD_DEBUG_EVENT]")
             return DBG_CONTINUE
         def three(dbg):
-            self.debugPrint("[0x3-> CREATE_PROCESS_DEBUG_EVENT]")
+            self.debug_print("[0x3-> CREATE_PROCESS_DEBUG_EVENT]")
             return DBG_CONTINUE
         def four(dbg):
-            self.debugPrint("[0x4-> EXIT_THREAD_DEBUG_EVENT]")
+            self.debug_print("[0x4-> EXIT_THREAD_DEBUG_EVENT]")
             return DBG_CONTINUE
         def five(dbg):
-            self.debugPrint("[0x5-> EXIT_PROCESS_DEBUG_EVENT]")
+            self.debug_print("[0x5-> EXIT_PROCESS_DEBUG_EVENT]")
             return DBG_CONTINUE
         def six(dbg):
             last_dll = dbg.get_system_dll(-1)
-            self.debugPrint("[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x%08x %s" % (last_dll.base, last_dll.path))
+            self.debug_print("[0x6-> LOAD_DLL_DEBUG_EVENT] > 0x%08x %s" % (last_dll.base, last_dll.path))
             return DBG_CONTINUE
         def seven(dbg):
-            self.debugPrint("[0x7-> UNLOAD_DLL_DEBUG_EVENT]")
+            self.debug_print("[0x7-> UNLOAD_DLL_DEBUG_EVENT]")
             return DBG_CONTINUE
         def eight(dbg):
-            self.debugPrint("[0x8-> OUTPUT_DEBUG_STRING_EVENT]")
+            self.debug_print("[0x8-> OUTPUT_DEBUG_STRING_EVENT]")
             return DBG_CONTINUE
         def nine(dbg):
-            self.debugPrint("[0x9-> RIP_EVENT]")
+            self.debug_print("[0x9-> RIP_EVENT]")
             return DBG_CONTINUE
         dbg.set_callback(EXCEPTION_DEBUG_EVENT,one)
         dbg.set_callback(CREATE_THREAD_DEBUG_EVENT,two)
@@ -777,7 +781,7 @@ class DebuggerMain(Frame):
             else:
 # Disassemble this instruction
                 instruction = dbg.disasm(dbg.context.Eip)
-                self.debugPrint( "#%d\t0x%08x : %s" % (instruction_count,dbg.context.Eip,
+                self.debug_print( "#%d\t0x%08x : %s" % (instruction_count,dbg.context.Eip,
 instruction))
                 instruction_count += 1
                 dbg.single_step(True)
@@ -789,30 +793,30 @@ instruction))
         # take everything from ESP to ESP+20, which should give us enough
         # information to determine if we own any of the data
         esp_offset = 0
-        self.debugPrint("[*] Hit %s" % dangerous_functions_resolved[dbg.context.Eip])
-        self.debugPrint( "=================================================================" )
+        self.debug_print("[*] Hit %s" % dangerous_functions_resolved[dbg.context.Eip])
+        self.debug_print( "=================================================================" )
         while esp_offset <= 20:
             parameter = dbg.smart_dereference(dbg.context.Esp + esp_offset)
-            self.debugPrint( "[ESP + %d] => %s" % (esp_offset, parameter))
+            self.debug_print( "[ESP + %d] => %s" % (esp_offset, parameter))
             esp_offset += 4
-        self.debugPrint( "=================================================================" )
+        self.debug_print( "=================================================================" )
         dbg.suspend_all_threads()
         dbg.process_snapshot()
         dbg.resume_all_threads()
-        self.highlighter(1)
+        self.highlighter()
         return DBG_CONTINUE
 
     def hide_bp(self, dbg):
         if dbg.first_breakpoint:
             dbg.hide_debugger()
-            self.debugPrint("[+] ========Debugger hidden!========")
+            self.debug_print("[+] ========Debugger hidden!========")
         return DBG_CONTINUE
 
     def breakpointset(self, debugger):
         try:
             file = open("Breakpoints.txt", "r")
         except:
-            self.debugPrint("Could not find Breakpoints.txt, no breakpoint setting...")
+            self.debug_print("Could not find Breakpoints.txt, no breakpoint setting...")
             return False
         if self.hide2:
             dbg.set_callback(EXCEPTION_BREAKPOINT, self.hide_bp)
@@ -821,28 +825,28 @@ instruction))
                 line = re.sub("[^\w]", " ",  line).split()
                 if debugger == "pydbg":
                     func_address = dbg.func_resolve(line[0],line[2])
-                    self.debugPrint("Address of %s(%s) is: 0x%08x" % (line[2], line[0], func_address))
+                    self.debug_print("Address of %s(%s) is: 0x%08x" % (line[2], line[0], func_address))
                     if self.BreakFunk == 1:
                         dbg.bp_set(func_address, description=line[2],handler=self.handler_breakpoint)
                     elif self.BreakFunk == 2:
-                        self.debugPrint("[*] Using 'SEH Unwind' handler")
+                        self.debug_print("[*] Using 'SEH Unwind' handler")
                         dbg.bp_set(func_address, description=line[2],handler=self.SEH_unwind)
                     elif self.BreakFunk == 3:
-                        self.debugPrint("[*] Using 'Dump Heap Info' handler")
+                        self.debug_print("[*] Using 'Dump Heap Info' handler")
                         dbg.bp_set(func_address, description=line[2],handler=self.dump_info)
                     elif self.BreakFunk == 4:
-                        self.debugPrint("[*] Using 'Disassem Around' handler")
+                        self.debug_print("[*] Using 'Disassem Around' handler")
                         dbg.bp_set(func_address, description=line[2],handler=self.disassem)
                     elif self.BreakFunk == 5:
-                        self.debugPrint("[*] Using 'All info handler'")
+                        self.debug_print("[*] Using 'All info handler'")
                         dbg.bp_set(func_address, description=line[2],handler=self.all_info)
-                    self.debugPrint("Set Breakpoint on %s at address 0x%08x" % (line[2], func_address))
+                    self.debug_print("Set Breakpoint on %s at address 0x%08x" % (line[2], func_address))
             except:
-                self.debugPrint("[-] Error setting breakpoint on %s(%s) at address 0x%08x" % (line[2], line[0], func_address))
-        self.debugPrint("[*] Done with breakpoints") 
+                self.debug_print("[-] Error setting breakpoint on %s(%s) at address 0x%08x" % (line[2], line[0], func_address))
+        self.debug_print("[*] Done with breakpoints") 
             
             
-    def debugPrint(self, line):
+    def debug_print(self, line):
         print line
         try:
             line.strip("\n")
@@ -854,42 +858,42 @@ instruction))
         if self.nocolor:
             return True
         else:
-            self.highlighter(1)
+            self.highlighter()
         time.sleep(sleepTime)
 
     def print3(self, line):
         line.strip("\n")
         self.textPad.insert('1.0', line)
-        self.highlighter(1)
+        self.highlighter()
 
     def crashMode(self):
-        self.debugPrint("[+] Enabling crash mode")
+        self.debug_print("[+] Enabling crash mode")
         self.crash_mode_state = True
         self.lib_mode_state = False
         self.pydbg_mode = True
 
     def libMode(self):
-        self.debugPrint("[+] Enabling Created Files mode")
+        self.debug_print("[+] Enabling Created Files mode")
         self.lib_mode_state = True
         self.crash_mode_state = False
         self.pydbg_mode = True
 
     def defualt(self):
-        self.debugPrint("[+] Using default mode")
+        self.debug_print("[+] Using default mode")
         self.lib_mode_state = False
         self.pydbg_mode = False
         self.crash_mode_state = False
 
     def disassemble3(self):
         label = tkMessageBox.showinfo("Info", "This will not print anything until it is done, so don't go anywhere! After its done hit Options then Export and it will send it to a file.")
-        self.debugPrint("This may take a while...")
+        self.debug_print("This may take a while...")
         t = threading.Thread(target=self.disassemble2)
         t.daemon = True
         t.start()
 
     def disassemble2(self):
         if self.OPEN is None:
-            self.debugPrint("[-]Error: You must open an executable first")
+            self.debug_print("[-]Error: You must open an executable first")
             return False
         self.diss = True
         num_bytes = os.path.getsize(self.OPEN)
@@ -900,7 +904,7 @@ instruction))
         try:
             code = open(filename, 'rb').read()
         except Exception as e:
-            self.debugPrint('Error reading file %s: %s' % (filename, e))
+            self.debug_print('Error reading file %s: %s' % (filename, e))
             return False
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
@@ -908,7 +912,7 @@ instruction))
         # This shows how to use the Deocode - Generator
         iterable = distorm3.DecodeGenerator(offset, code, dt)
         #for (offset, size, instruction, hexdump) in iterable:
-        #    self.debugPrint("%.8x: %-32s %s" % (offset, hexdump, instruction))
+        #    self.debug_print("%.8x: %-32s %s" % (offset, hexdump, instruction))
         #    print("%.8x: %-32s %s" % (offset, hexdump, instruction))
 
         # It could also be used as a returned list:
@@ -918,11 +922,11 @@ instruction))
         
         line = mystdout.getvalue()
         self.textPad.insert('1.0', line)
-        #self.debugPrint(line)
-        self.debugPrint("Number of bytes disassembled: %d" % num_bytes)
-        self.debugPrint("Disassembled:%s" % self.OPEN)
+        #self.debug_print(line)
+        self.debug_print("Number of bytes disassembled: %d" % num_bytes)
+        self.debug_print("Disassembled:%s" % self.OPEN)
         self.nocolor = True
-        self.highlighter(1)
+        self.highlighter()
         #t = threading.Thread(target=self.highlighter)
         #t.daemon = True
         #t.start()
@@ -947,7 +951,7 @@ instruction))
 
             crash_bin = utils.crash_binning.crash_binning()
             crash_bin.record_crash(dbg)
-            self.debugPrint(crash_bin.crash_synopsis())
+            self.debug_print(crash_bin.crash_synopsis())
             dbg.terminate_process()
             return DBG_EXCEPTION_NOT_HANDLED
         
@@ -960,19 +964,19 @@ instruction))
         self.breakpointset("pydbg")
         dbg.run()
         #line = mystdout.getvalue()
-        #self.debugPrint(line)
+        #self.debug_print(line)
         self.crash = True
         
     def GetLib(self, pid):
         target_process = pid
         pid_is_there = False
-        self.debugPrint("[*]Starting...")
+        self.debug_print("[*]Starting...")
         def handler_CreateFileW(dbg):
             Filename = ""
             addr_FilePointer = dbg.read_process_memory(dbg.context.Esp + 0x4, 4)
             addr_FilePointer = struct.unpack("<L", addr_FilePointer)[0]
             Filename = dbg.smart_dereference(addr_FilePointer, True)
-            self.debugPrint("[*]CreateFileW -> %s" % Filename)
+            self.debug_print("[*]CreateFileW -> %s" % Filename)
             return DBG_CONTINUE
         def handler_CreateFileA(dbg):
             offset = 0
@@ -980,15 +984,15 @@ instruction))
             addr_FilePointer = dbg.read_process_memory(dbg.context.Esp + 0x4, 4)
             addr_FilePointer = struct.unpack("<L", addr_FilePointer)[0]
             buffer_FileA = dbg.smart_dereference(addr_FilePointer, True)
-            self.debugPrint("[*]CreateFileA -> %s" % buffer_FileA)
+            self.debug_print("[*]CreateFileA -> %s" % buffer_FileA)
             return DBG_CONTINUE
         pid_is_there = True
-        self.debugPrint("[*]Attaching to %s" % target_process)
+        self.debug_print("[*]Attaching to %s" % target_process)
         if not self.RepresentsInt(pid):
             try:
                 dbg.load(self.OPEN)
             except:
-                self.debugPrint("[*]Error: Is this right:%s" % self.OPEN)
+                self.debug_print("[*]Error: Is this right:%s" % self.OPEN)
         else:
             dbg.attach(int(pid))
         self.get_dlls()
@@ -998,38 +1002,37 @@ instruction))
         CreateFileA = dbg.func_resolve_debuggee("kernel32.dll","CreateFileA")
         if CreateFileW == None:
             try:
-                self.debugPrint("[*]Resolving %s @ %08x" % (function2,CreateFileW))
+                self.debug_print("[*]Resolving %s @ %08x" % (function2,CreateFileW))
             except:
-                self.debugPrint("[*]Resolving %s @ Unknown" % (function2))
+                self.debug_print("[*]Resolving %s @ Unknown" % (function2))
         if CreateFileA == None:
             try:
-                self.debugPrint("[*]Resolving %s @ %08x" % (function3,CreateFileA))
+                self.debug_print("[*]Resolving %s @ %08x" % (function3,CreateFileA))
             except:
-                self.debugPrint("[*]Resolving %s @ Unknown" % (function2))
+                self.debug_print("[*]Resolving %s @ Unknown" % (function2))
         if CreateFileA == None:
             dbg.bp_set(CreateFileA, description="CreateFileA",handler=handler_CreateFileA)
         if CreateFileW == None:
             dbg.bp_set(CreateFileW, description="CreateFileW",handler=handler_CreateFileW)
         self.breakpointset("pydbg")
         dbg.debug_event_loop()
-        self.highlighter(1)
+        self.highlighter()
                            
     def detach2(self):
         if (self.PID == None):
             dbg.detach()
-            self.debugPrint("Detached!!!")
+            self.debug_print("Detached!!!")
         elif (self.open_state == None):
             dbg.detach()
-            self.debugPrint("Detached!!!")
+            self.debug_print("Detached!!!")
         else:
             label = tkMessageBox.showinfo("Error", "You must attach or open a .exe first")
     
     def onExit(self):
-        #debugger.detach()
         self.parent.destroy()
 
     def about_command(self):
-        label = tkMessageBox.showinfo("About", "Python debugger \nGUI [Version 3.0] \nSee the GitHub repo for instructions")
+        label = tkMessageBox.showinfo("About", "Python debugger \nGUI [Version %.1f] \nSee the GitHub repo for instructions" % version)
                 
     def clear(self):
             self.textPad.delete(1.0, 'end-1c')
@@ -1038,13 +1041,13 @@ instruction))
         self.w=popupWindowPID(self.master)
         self.master.wait_window(self.w.top)
         self.PID = self.w.value
-        self.debugPrint("Using PID of %s" % self.PID)
+        self.debug_print("Using PID of %s" % self.PID)
         
     def popupOPEN2(self):
         self.file = tkFileDialog.askopenfile(mode='r',title='Select an executable',filetypes=[("Executable Files", "*.exe")] )
         self.OPEN = self.file.name
         self.open_state = True
-        self.debugPrint("Application:%s" % self.OPEN)
+        self.debug_print("Application:%s" % self.OPEN)
 
     def popupOPEN(self):
         self.w=popupWindowOPEN(self.master)
@@ -1054,7 +1057,7 @@ instruction))
         self.OPEN.strip("")
         self.OPEN.strip("\r")
         self.open_state = True
-        self.debugPrint("Application:%s" % self.OPEN)
+        self.debug_print("Application:%s" % self.OPEN)
 
     def popupEVENT1(self):
         t = threading.Thread(target=popupWindowEVENT(self.master))
@@ -1067,26 +1070,26 @@ instruction))
 
     def popupTHREAD(self):
         if self.PID == self.OPEN:
-            self.debugPrint("[-] You must open or attach first...")
+            self.debug_print("[-] You must open or attach first...")
             return False
         i = 0;
         for thread_id in dbg.enumerate_threads():
             thread_handle  = dbg.open_thread(thread_id)
             context = dbg.get_thread_context(thread_handle)
-            self.debugPrint("[*] Dumping registers for threads:")
-            self.debugPrint("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
-            self.debugPrint("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
-            self.debugPrint("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
-            self.debugPrint("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
+            self.debug_print("[*] Dumping registers for threads:")
+            self.debug_print("[**] Thread ID:%03d: %08x EIP: %08x" % (i,thread_handle,context.Eip))
+            self.debug_print("[**] Thread ID:%03d:: %08x ESP: %08x" % (i,thread_handle,context.Esp))
+            self.debug_print("[**] Thread ID:%03d:: %08x EBP: %08x" % (i,thread_handle,context.Ebp))
+            self.debug_print("[**] Thread ID:%03d:: %08x EAX: %08x" % (i,thread_handle,context.Eax))
+            self.debug_print("[**] Thread ID:%03d:: %08x EBX: %08x" % (i,thread_handle,context.Ebx))
+            self.debug_print("[**] Thread ID:%03d:: %08x ECX: %08x" % (i,thread_handle,context.Ecx))
+            self.debug_print("[**] Thread ID:%03d:: %08x EDX: %08x" % (i,thread_handle,context.Edx))
             i += 1
         line = dbg.seh_unwind()
         synopsis = "\n[+]SEH Chain\n"
         for (addr, handler_str) in line:
             synopsis +=  "\t%08x -> %s\n" % (addr, handler_str)
-        self.debugPrint(synopsis)
+        self.debug_print(synopsis)
             
     def export(self):
         data = self.textPad.get(1.0, 'end-1c').encode('utf-8')
@@ -1095,19 +1098,19 @@ instruction))
             file = open(line, "w")
             file.write(data)
             file.close()
-            self.debugPrint("Exported to '%s'" % line)
+            self.debug_print("Exported to '%s'" % line)
         elif self.OPEN is None:
             line = "Debugger-Data-%s.txt" % self.PID
             file = open(line, "w")
             file.write(data)
             file.close()
-            self.debugPrint("Exported to '%s'" % line)
+            self.debug_print("Exported to '%s'" % line)
         else:
             line = "Debugger-Data-for-who-knows-what.txt"
             file = open(line, "w")
             file.write(data)
             file.close()
-            self.debugPrint("Exported to '%s'" % line)
+            self.debug_print("Exported to '%s'" % line)
 
     def entryValue(self):
         return self.w.value
@@ -1120,7 +1123,7 @@ instruction))
         if self.lib_mode_state:
             self.InitPyDBG()
             if self.open_state:
-                self.debugPrint("[-]Unable to set breakpoints with 'open' method, try attaching")
+                self.debug_print("[-]Unable to set breakpoints with 'open' method, try attaching")
                 data = "%s" % self.OPEN
                 t = threading.Thread(target=self.GetLib, args=(data,))
                 t.daemon = True
